@@ -228,30 +228,45 @@
 
 ## Phase 5：小队 Relay
 
+状态：已完成。
+
 目标：提供轻量小队当天排行榜。
 
 任务：
 
-- 创建 Cloudflare Workers + D1 项目。
-- 实现最小 API：
-  - `POST /v1/team/snapshot`
-  - `GET /v1/team/ranking?team=...&date=...`
-- 本地生成匿名 member id。
-- 创建小队时生成高熵 team code。
-- 加入小队时保存 team code。
-- 完成任务后同步当天 snapshot。
-- 菜单栏今日任务页显示 `小队排名 3/10`。
-- 设置页显示当日完整小队排行榜。
-- 服务端保留当天完整成员结果。
-- 服务端保留最近 48-72 小时数据作为容错。
+- [x] 创建 Cloudflare Workers + D1 项目。
+- [x] 实现最小 API：
+  - [x] `POST /v1/team/snapshot`
+  - [x] `GET /v1/team/ranking?team=...&date=...`
+- [x] 本地生成匿名 member id。
+- [x] 创建小队时生成高熵 team code。
+- [x] 加入小队时保存 team code。
+- [x] 完成任务后同步当天 snapshot。
+- [x] 菜单栏今日任务页显示 `小队排名 3/10`。
+- [x] 设置页显示当日完整小队排行榜。
+- [x] 服务端保留当天完整成员结果。
+- [x] 服务端保留最近 48-72 小时数据作为容错。
 
 验收：
 
-- 无账号系统也能创建 / 加入小队。
-- 多台机器使用同一 team code 能看到同一排行榜。
-- 菜单栏只显示最简排名。
-- 个人历史仍完全依赖本地数据库。
-- Relay 不保存 prompt、代码、diff、路径、hook 原始 payload。
+- [x] 无账号系统也能创建 / 加入小队。
+- [x] 多台机器使用同一 team code 能看到同一排行榜。
+- [x] 菜单栏只显示最简排名。
+- [x] 个人历史仍完全依赖本地数据库。
+- [x] Relay 不保存 prompt、代码、diff、路径、hook 原始 payload。
+
+实现记录：
+
+- 新增 `relay/`，使用 Cloudflare Workers + D1，提供 snapshot upsert 和当日 ranking 查询。
+- Relay 只保存 `team_code_hash`、`member_id_hash`、可选 display name、日期、延寿分钟、完成次数和更新时间。
+- Relay 每次 snapshot 写入时清理 3 天前数据，满足 48-72 小时容错。
+- 新增 `HealthyVibeTeam` target，负责 team code、匿名 member id hash、Relay client 和 ranking model。
+- 小队码本地保存明文用于用户复制/查看，上传时只传 SHA-256 hash。
+- MVP 没有昵称设置项，因此默认不上传 macOS 用户名。
+- `team_profile` 增加本地 `team_code` 和 `member_id`，`team_snapshots_cache` 增加 `rank`，个人历史仍由 SQLite 本地账本负责。
+- 今日页仅在已加入小队且有排名缓存时显示一行简洁排名。
+- 设置页支持创建小队、加入小队、同步、退出，并展示当日榜单。
+- 已通过 `swift test`、`npm run typecheck`、`npm test` 和 `make bundle`。
 
 ## Phase 6：安装与分发
 

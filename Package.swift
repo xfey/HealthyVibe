@@ -22,6 +22,7 @@ let package = Package(
             name: "HealthyVibeStorage",
             dependencies: [
                 "HealthyVibeCore",
+                "HealthyVibeTeam",
                 .product(name: "GRDB", package: "GRDB.swift")
             ],
             path: "Sources/HealthyVibeStorage"
@@ -30,12 +31,17 @@ let package = Package(
             name: "HealthyVibeAgents",
             path: "Sources/HealthyVibeAgents"
         ),
+        .target(
+            name: "HealthyVibeTeam",
+            path: "Sources/HealthyVibeTeam"
+        ),
         .executableTarget(
             name: "HealthyVibe",
             dependencies: [
                 "HealthyVibeCore",
                 "HealthyVibeStorage",
-                "HealthyVibeAgents"
+                "HealthyVibeAgents",
+                "HealthyVibeTeam"
             ],
             path: "Sources/HealthyVibe"
         ),
@@ -48,7 +54,8 @@ let package = Package(
             name: "HealthyVibeStorageTests",
             dependencies: [
                 "HealthyVibeCore",
-                "HealthyVibeStorage"
+                "HealthyVibeStorage",
+                "HealthyVibeTeam"
             ],
             path: "Tests/HealthyVibeStorageTests"
         ),
@@ -56,6 +63,11 @@ let package = Package(
             name: "HealthyVibeAgentsTests",
             dependencies: ["HealthyVibeAgents"],
             path: "Tests/HealthyVibeAgentsTests"
+        ),
+        .testTarget(
+            name: "HealthyVibeTeamTests",
+            dependencies: ["HealthyVibeTeam"],
+            path: "Tests/HealthyVibeTeamTests"
         )
     ]
 )

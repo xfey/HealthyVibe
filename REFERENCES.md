@@ -216,9 +216,58 @@ brew install --cask healthyvibe
 - `hook_events` 只保留最近少量摘要用于排障。
 - 不保存 prompt、代码路径、diff、命令内容。
 
-## 5. 任务与提醒
+## 5. 小队 Relay
 
-### 5.1 每日固定任务池
+当前方案：Cloudflare Workers + D1。
+
+参考资料：
+
+- Cloudflare Workers: https://developers.cloudflare.com/workers/
+- Cloudflare D1: https://developers.cloudflare.com/d1/
+
+实现记录：
+
+- Relay 目录：`relay/`
+- Worker 入口：`relay/src/index.ts`
+- D1 migration：`relay/migrations/0001_team_snapshots.sql`
+- Swift 客户端：`Sources/HealthyVibeTeam/TeamRelayClient.swift`
+
+API：
+
+```text
+POST /v1/team/snapshot
+GET  /v1/team/ranking?team=<team_code_hash>&date=<YYYY-MM-DD>
+```
+
+服务端保存：
+
+- `team_code_hash`
+- `member_id_hash`
+- `display_name`（可选；MVP 默认不上传 macOS 用户名）
+- `date`
+- `longevity_minutes`
+- `completed_task_count`
+- `updated_at`
+
+服务端不保存：
+
+- 小队码明文。
+- member id 明文。
+- prompt。
+- 代码路径。
+- diff。
+- 命令内容。
+- hook 原始 payload。
+
+保留策略：
+
+- 每次 snapshot 写入时清理 3 天前的 date 数据。
+- Relay 只承担当天/近几天排行榜同步，不作为个人历史账本。
+- 个人历史、日历和长期统计仍以本地 SQLite 为准。
+
+## 6. 任务与提醒
+
+### 6.1 每日固定任务池
 
 MVP 任务池草案：
 
@@ -240,7 +289,7 @@ MVP 任务池草案：
 - `换一个` 是随机刷新，从剩余任务池中选一项，不打开选择列表。
 - 某项任务次数完成后，从随机候选中移除。
 
-### 5.2 提醒节奏
+### 6.2 提醒节奏
 
 触发规则：
 
@@ -249,47 +298,6 @@ MVP 任务池草案：
 - 连续 60 分钟活跃使用但没有收到 hook 时，兜底下发一张任务。
 - 电脑睡眠、锁屏、熄屏期间不累计活跃时间。
 - 唤醒或解锁后继续累计活跃时间。
-
-## 6. Relay Server
-
-当前方案：Cloudflare Workers + D1。
-
-- Cloudflare Workers: https://developers.cloudflare.com/workers/
-- Cloudflare D1: https://developers.cloudflare.com/d1/
-
-服务定位：
-
-- 不做账号系统。
-- 不做长期个人历史。
-- 只做小队当天排行榜 relay。
-- 当天数据保留完整成员结果，不只是返回排名数字。
-
-最小 API：
-
-```text
-POST /v1/team/snapshot
-GET  /v1/team/ranking?team=...&date=...
-```
-
-`snapshot` 示例：
-
-```json
-{
-  "teamCodeHash": "...",
-  "memberIdHash": "...",
-  "displayName": "xfey",
-  "date": "2026-05-19",
-  "longevityMinutes": 18,
-  "completedTaskCount": 6,
-  "updatedAt": "2026-05-19T10:00:00Z"
-}
-```
-
-保留策略：
-
-- 当天数据用于小队排行榜。
-- 可保留最近 48-72 小时作为容错窗口。
-- 个人长期历史只保存在本地。
 
 ## 7. 健康与延寿值参考
 
@@ -360,9 +368,6 @@ GET  /v1/team/ranking?team=...&date=...
 
 ## 9. 后续待查
 
-- Claude Code `UserPromptSubmit` 在 settings JSON 中的精确写入格式。
-- Codex `UserPromptSubmit` 在 `~/.codex/hooks.json` 中的精确写入格式。
-- `UNUserNotificationCenter` 点击通知后激活菜单栏 popover 的最佳实现。
-- `NSWorkspace` 监听睡眠、唤醒、锁屏、解锁、屏幕休眠的实现细节。
 - 非 App Store 分发下开机启动的推荐实现。
 - Homebrew Cask 初版发布流程和自动更新策略。
+- Cloudflare D1 生产数据库绑定、migration 部署和域名配置。

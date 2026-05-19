@@ -12,10 +12,9 @@ struct TodayTaskPageView: View {
 
             card
 
-            Text("Phase 1 使用内存任务池；关闭 app 后的历史保存会在 Phase 2 接入 SQLite。")
-                .font(.system(size: 12))
-                .foregroundStyle(HVColor.mutedText)
-                .fixedSize(horizontal: false, vertical: true)
+            if let teamRankText = appModel.teamRankText {
+                teamRankBadge(teamRankText)
+            }
 
             Spacer(minLength: 0)
         }
@@ -176,6 +175,28 @@ struct TodayTaskPageView: View {
 
             HVProgressBar(value: appModel.todayTaskState.progressFraction)
         }
+    }
+
+    private func teamRankBadge(_ text: String) -> some View {
+        HStack(spacing: HVSpacing.small) {
+            Text(text)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(HVColor.calmAccent)
+                .lineLimit(1)
+
+            Spacer(minLength: 0)
+
+            if let message = appModel.teamStatusMessage {
+                Text(message)
+                    .font(.system(size: 11))
+                    .foregroundStyle(HVColor.mutedText)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.horizontal, HVSpacing.medium)
+        .padding(.vertical, HVSpacing.small)
+        .background(HVColor.successFill)
+        .clipShape(RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous))
     }
 
     private func statusBanner(_ message: String) -> some View {

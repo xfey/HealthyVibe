@@ -3,3 +3,8 @@
 DerivedData/
 *.xcuserdata/
 .DS_Store
+node_modules/
+relay/.dev.vars
+relay/.wrangler/
+relay/dist/
+npm-debug.log*

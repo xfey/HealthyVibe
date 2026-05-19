@@ -2,6 +2,7 @@ import Foundation
 import HealthyVibeAgents
 import HealthyVibeCore
 import HealthyVibeStorage
+import HealthyVibeTeam
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -14,6 +15,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var notificationPermissionState: NotificationPermissionState = .unknown
     @Published private(set) var lastReminderMessage: String?
     @Published private(set) var agentConnectionStatuses: [AgentKind: AgentConnectionStatus] = [:]
+    @Published private(set) var teamProfile: TeamProfile?
+    @Published private(set) var teamRanking: TeamRanking?
+    @Published private(set) var teamStatusMessage: String?
     @Published var selectedHistoryDateKey: String?
 
     let paths: AppPaths
@@ -24,6 +28,7 @@ final class AppModel: ObservableObject {
     private var hookBridgeManager: HookBridgeManager?
     private var hookEventPollTimer: Timer?
     private var lastReminderAt: Date?
+    private let teamRelayClient = TeamRelayClient()
     private let reminderCooldown: TimeInterval = 30 * 60
 
     init(paths: AppPaths = AppPaths()) {
@@ -50,6 +55,13 @@ final class AppModel: ObservableObject {
             self.hookBridgeManager = hookBridgeManager
             agentConnectionStatuses = hookBridgeManager.statuses()
             todayTaskState = try database.loadTodayState()
+            teamProfile = try database.loadTeamProfile()
+            if let teamProfile {
+                teamRanking = try database.loadTeamRankingCache(
+                    teamCodeHash: teamProfile.teamCodeHash,
+                    date: todayTaskState.dateKey
+                )
+            }
             lastReminderAt = try database.loadLastReminderDate()
             selectedHistoryDateKey = todayTaskState.dateKey
             try reloadHistory()
@@ -112,6 +124,7 @@ final class AppModel: ObservableObject {
             }
 
             try reloadHistory()
+            syncTeamSnapshot()
         } catch {
             recordError("完成任务失败：\(error.localizedDescription)")
         }
@@ -141,6 +154,7 @@ final class AppModel: ObservableObject {
 
             selectedHistoryDateKey = todayTaskState.dateKey
             try reloadHistory()
+            try reloadTeamRankingCache()
         } catch {
             recordError("刷新今日状态失败：\(error.localizedDescription)")
         }
@@ -161,6 +175,9 @@ final class AppModel: ObservableObject {
             try reloadHistory()
             lastReminderMessage = nil
             lastErrorMessage = nil
+            teamProfile = nil
+            teamRanking = nil
+            teamStatusMessage = nil
         } catch {
             recordError("清除本地数据失败：\(error.localizedDescription)")
         }
@@ -221,6 +238,73 @@ final class AppModel: ObservableObject {
         agentConnectionStatuses[agent] ?? .notConnected
     }
 
+    var teamRankText: String? {
+        guard
+            let teamProfile,
+            let teamRanking,
+            let rank = teamRanking.rank(for: teamProfile.memberIDHash)
+        else {
+            return nil
+        }
+
+        return "小队排名 \(rank)/\(teamRanking.members.count)"
+    }
+
+    func createTeam() {
+        saveTeam(code: TeamIdentity.generateTeamCode())
+    }
+
+    func joinTeam(code: String) {
+        saveTeam(code: code)
+    }
+
+    func leaveTeam() {
+        do {
+            try database?.clearTeamProfile()
+            teamProfile = nil
+            teamRanking = nil
+            teamStatusMessage = nil
+        } catch {
+            recordError("退出小队失败：\(error.localizedDescription)")
+        }
+    }
+
+    func syncTeamSnapshot() {
+        guard let teamProfile else {
+            return
+        }
+
+        let snapshot = TeamSnapshot(
+            teamCodeHash: teamProfile.teamCodeHash,
+            memberIdHash: teamProfile.memberIDHash,
+            displayName: teamProfile.displayName,
+            date: todayTaskState.dateKey,
+            longevityMinutes: todayTaskState.totalLongevityMinutes,
+            completedTaskCount: todayTaskState.completedTaskCount,
+            updatedAt: Date()
+        )
+
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+
+            do {
+                try await teamRelayClient.postSnapshot(snapshot)
+                let ranking = try await teamRelayClient.fetchRanking(
+                    teamCodeHash: teamProfile.teamCodeHash,
+                    date: snapshot.date
+                )
+                try database?.saveTeamRankingCache(ranking)
+                teamRanking = ranking
+                teamStatusMessage = "小队已同步"
+            } catch {
+                teamStatusMessage = "Relay 暂不可用，本地进度已保存。"
+                AppLog.app.error("Team sync failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
+
     func historySummary(for dateKey: String) -> DailyHistorySummary? {
         monthSummaries.first { $0.dateKey == dateKey }
     }
@@ -245,6 +329,43 @@ final class AppModel: ObservableObject {
                 currentStreakDays: todayTaskState.completedTaskCount > 0 ? 1 : 0,
                 totalLongevityMinutes: todayTaskState.totalLongevityMinutes
             )
+        }
+    }
+
+    private func reloadTeamRankingCache() throws {
+        guard let teamProfile else {
+            teamRanking = nil
+            return
+        }
+
+        teamRanking = try database?.loadTeamRankingCache(
+            teamCodeHash: teamProfile.teamCodeHash,
+            date: todayTaskState.dateKey
+        )
+    }
+
+    private func saveTeam(code: String) {
+        let normalizedCode = TeamIdentity.normalizeTeamCode(code)
+        guard normalizedCode.replacingOccurrences(of: "-", with: "").count >= 8 else {
+            teamStatusMessage = "请输入有效的小队码。"
+            return
+        }
+
+        let memberID = teamProfile?.memberID.isEmpty == false ? teamProfile?.memberID : UUID().uuidString
+        let profile = TeamIdentity.makeProfile(
+            teamCode: normalizedCode,
+            memberID: memberID ?? UUID().uuidString,
+            displayName: teamProfile?.displayName
+        )
+
+        do {
+            try database?.saveTeamProfile(profile)
+            teamProfile = profile
+            try reloadTeamRankingCache()
+            teamStatusMessage = "已加入小队 \(profile.teamCode)"
+            syncTeamSnapshot()
+        } catch {
+            recordError("保存小队失败：\(error.localizedDescription)")
         }
     }
 

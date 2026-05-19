@@ -1,6 +1,7 @@
 import Foundation
 import XCTest
 import HealthyVibeCore
+import HealthyVibeTeam
 @testable import HealthyVibeStorage
 
 final class AppDatabaseTests: XCTestCase {
@@ -119,6 +120,45 @@ final class AppDatabaseTests: XCTestCase {
             processedAt: date
         )
         XCTAssertEqual(try database.debugCount(in: "hook_events"), 1)
+    }
+
+    func testPersistsTeamProfileAndRankingCache() throws {
+        let database = try makeDatabase()
+        let profile = TeamIdentity.makeProfile(
+            teamCode: "ABCD-EFGH-IJKL",
+            memberID: "member-1",
+            displayName: "xfey"
+        )
+
+        try database.saveTeamProfile(profile)
+        XCTAssertEqual(try database.loadTeamProfile(), profile)
+
+        let ranking = TeamRanking(
+            teamCodeHash: profile.teamCodeHash,
+            date: "2026-05-19",
+            generatedAt: fixedDate(dayOffset: 0),
+            members: [
+                TeamRankingMember(
+                    rank: 1,
+                    memberIdHash: profile.memberIDHash,
+                    displayName: "xfey",
+                    longevityMinutes: 20,
+                    completedTaskCount: 6,
+                    updatedAt: fixedDate(dayOffset: 0)
+                )
+            ]
+        )
+
+        try database.saveTeamRankingCache(ranking)
+        let cached = try database.loadTeamRankingCache(
+            teamCodeHash: profile.teamCodeHash,
+            date: "2026-05-19"
+        )
+        XCTAssertEqual(cached?.members.first?.rank, 1)
+
+        try database.clearTeamProfile()
+        XCTAssertNil(try database.loadTeamProfile())
+        XCTAssertNil(try database.loadTeamRankingCache(teamCodeHash: profile.teamCodeHash, date: "2026-05-19"))
     }
 }
 

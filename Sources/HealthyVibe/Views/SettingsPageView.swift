@@ -1,9 +1,11 @@
 import SwiftUI
 import HealthyVibeAgents
+import HealthyVibeTeam
 
 struct SettingsPageView: View {
     @EnvironmentObject private var appModel: AppModel
     @State private var isConfirmingClear = false
+    @State private var teamCodeInput = ""
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -56,7 +58,7 @@ struct SettingsPageView: View {
                 }
 
                 settingsSection("Team") {
-                    settingsRow(title: "小队", value: "未加入")
+                    teamSection
                 }
 
                 settingsSection("Preferences") {
@@ -137,6 +139,106 @@ struct SettingsPageView: View {
                 .lineLimit(1)
         }
         .frame(height: 24)
+    }
+
+    @ViewBuilder
+    private var teamSection: some View {
+        if let profile = appModel.teamProfile {
+            settingsRow(title: "小队码", value: profile.teamCode)
+
+            if let teamRankText = appModel.teamRankText {
+                Divider()
+                    .overlay(HVColor.border)
+                    .padding(.vertical, HVSpacing.xsmall)
+                settingsRow(title: "今日排名", value: teamRankText.replacingOccurrences(of: "小队排名 ", with: ""))
+            }
+
+            if let ranking = appModel.teamRanking {
+                Divider()
+                    .overlay(HVColor.border)
+                    .padding(.vertical, HVSpacing.xsmall)
+
+                VStack(alignment: .leading, spacing: HVSpacing.xsmall) {
+                    ForEach(ranking.members.prefix(8)) { member in
+                        rankingRow(member, isSelf: member.memberIdHash == profile.memberIDHash)
+                    }
+                }
+            }
+
+            HStack(spacing: HVSpacing.small) {
+                Button("同步") {
+                    appModel.syncTeamSnapshot()
+                }
+                .buttonStyle(HVSecondaryButtonStyle())
+
+                Button("退出") {
+                    appModel.leaveTeam()
+                }
+                .buttonStyle(HVSecondaryButtonStyle())
+            }
+            .padding(.top, HVSpacing.small)
+        } else {
+            TextField("输入小队码", text: $teamCodeInput)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 12))
+
+            HStack(spacing: HVSpacing.small) {
+                Button("创建小队") {
+                    appModel.createTeam()
+                }
+                .buttonStyle(HVSecondaryButtonStyle())
+
+                Button("加入") {
+                    appModel.joinTeam(code: teamCodeInput)
+                    teamCodeInput = ""
+                }
+                .buttonStyle(HVSecondaryButtonStyle())
+                .disabled(teamCodeInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding(.top, HVSpacing.small)
+        }
+
+        if let message = appModel.teamStatusMessage {
+            Text(message)
+                .font(.system(size: 11))
+                .foregroundStyle(HVColor.mutedText)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, HVSpacing.small)
+        }
+    }
+
+    private func rankingRow(_ member: TeamRankingMember, isSelf: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: HVSpacing.small) {
+            Text("#\(member.rank)")
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .foregroundStyle(isSelf ? HVColor.calmAccent : HVColor.secondaryText)
+                .frame(width: 28, alignment: .leading)
+
+            Text(displayName(for: member, isSelf: isSelf))
+                .font(.system(size: 12, weight: isSelf ? .semibold : .medium))
+                .foregroundStyle(HVColor.primaryText)
+                .lineLimit(1)
+
+            Spacer(minLength: HVSpacing.small)
+
+            Text("\(member.longevityMinutes) 分钟")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(HVColor.secondaryText)
+                .lineLimit(1)
+        }
+        .frame(height: 22)
+    }
+
+    private func displayName(for member: TeamRankingMember, isSelf: Bool) -> String {
+        if isSelf {
+            return "我"
+        }
+
+        if let displayName = member.displayName, !displayName.isEmpty {
+            return displayName
+        }
+
+        return "队友 \(String(member.memberIdHash.prefix(4)))"
     }
 
     private func agentRow(_ agent: AgentKind) -> some View {

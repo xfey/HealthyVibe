@@ -108,6 +108,44 @@ Codex:      ~/.codex/hooks.json
 
 `agent-event.sh` 会丢弃 stdin，仅写入 `source`、`event`、`receivedAt`。
 
+## Phase 5 验证
+
+已验证：
+
+```bash
+swift test
+make bundle
+cd relay && npm run typecheck
+cd relay && npm test
+```
+
+当前小队 Relay：
+
+```text
+relay/src/index.ts
+relay/migrations/0001_team_snapshots.sql
+```
+
+Relay API：
+
+```text
+POST /v1/team/snapshot
+GET  /v1/team/ranking?team=<team_code_hash>&date=<YYYY-MM-DD>
+```
+
+Swift 客户端：
+
+```text
+Sources/HealthyVibeTeam/
+```
+
+小队数据边界：
+
+- 本地保存小队码和匿名 member id，便于用户查看小队码和稳定识别自己。
+- 上传 Relay 时只传 `team_code_hash`、`member_id_hash`、可选 display name、日期、延寿分钟和完成次数。
+- Relay 不接收、不保存 prompt、代码、diff、路径或 hook 原始 payload。
+- Relay 保留最近 3 天数据，个人长期历史仍由本地 SQLite 保存。
+
 ## 当前架构
 
 ```text
@@ -126,6 +164,13 @@ Sources/HealthyVibeAgents/
   HookBridge        bridge script、event inbox、Agent 配置合并
 Sources/HealthyVibeStorage/
   AppDatabase       GRDB migrations、任务状态持久化、日历统计
+Sources/HealthyVibeTeam/
+  TeamIdentity      小队码、匿名 member id、hash
+  TeamRelayClient   Relay API 客户端
+  TeamModels        小队 profile、snapshot、ranking
+relay/
+  src/              Cloudflare Worker API、校验、排行逻辑
+  migrations/       D1 表结构
 Tests/HealthyVibeCoreTests/
   TaskEngineTests   Phase 1 核心规则测试
   ActiveTimeTests   Phase 3 活跃时间规则测试
@@ -133,6 +178,8 @@ Tests/HealthyVibeStorageTests/
   AppDatabaseTests  Phase 2 持久化规则测试
 Tests/HealthyVibeAgentsTests/
   HookBridgeTests   Phase 4 hook bridge 和配置合并测试
+Tests/HealthyVibeTeamTests/
+  TeamTests         Phase 5 小队身份和 Relay client 测试
 Resources/
   Info.plist        app bundle 元信息，包含 LSUIElement
 Scripts/

@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import HealthyVibeCore
+import HealthyVibeTeam
 
 public final class AppDatabase {
     private let dbQueue: DatabaseQueue
@@ -199,6 +200,145 @@ public final class AppDatabase {
         }
     }
 
+    public func loadTeamProfile() throws -> TeamProfile? {
+        try dbQueue.read { db -> TeamProfile? in
+            guard let row = try Row.fetchOne(
+                db,
+                sql: """
+                SELECT team_code, team_code_hash, member_id, member_id_hash, display_name
+                FROM team_profile
+                WHERE id = 1
+                """
+            ) else {
+                return nil
+            }
+
+            let teamCodeHash: String? = row["team_code_hash"]
+            let memberIDHash: String? = row["member_id_hash"]
+
+            guard let teamCodeHash, let memberIDHash else {
+                return nil
+            }
+
+            return TeamProfile(
+                teamCode: row["team_code"] ?? "",
+                teamCodeHash: teamCodeHash,
+                memberID: row["member_id"] ?? "",
+                memberIDHash: memberIDHash,
+                displayName: row["display_name"]
+            )
+        }
+    }
+
+    public func saveTeamProfile(_ profile: TeamProfile) throws {
+        try dbQueue.write { db in
+            try db.execute(
+                sql: """
+                INSERT INTO team_profile (
+                    id, team_code, team_code_hash, member_id, member_id_hash, display_name, joined_at
+                )
+                VALUES (1, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    team_code = excluded.team_code,
+                    team_code_hash = excluded.team_code_hash,
+                    member_id = excluded.member_id,
+                    member_id_hash = excluded.member_id_hash,
+                    display_name = excluded.display_name,
+                    joined_at = excluded.joined_at
+                """,
+                arguments: [
+                    profile.teamCode,
+                    profile.teamCodeHash,
+                    profile.memberID,
+                    profile.memberIDHash,
+                    profile.displayName,
+                    isoString(Date())
+                ]
+            )
+        }
+    }
+
+    public func clearTeamProfile() throws {
+        try dbQueue.write { db in
+            try db.execute(sql: "DELETE FROM team_profile")
+            try db.execute(sql: "DELETE FROM team_snapshots_cache")
+        }
+    }
+
+    public func saveTeamRankingCache(_ ranking: TeamRanking) throws {
+        try dbQueue.write { db in
+            try db.execute(
+                sql: "DELETE FROM team_snapshots_cache WHERE team_code_hash = ? AND date = ?",
+                arguments: [ranking.teamCodeHash, ranking.date]
+            )
+
+            for member in ranking.members {
+                try db.execute(
+                    sql: """
+                    INSERT INTO team_snapshots_cache (
+                        team_code_hash,
+                        member_id_hash,
+                        display_name,
+                        date,
+                        longevity_minutes,
+                        completed_task_count,
+                        updated_at,
+                        rank
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    arguments: [
+                        ranking.teamCodeHash,
+                        member.memberIdHash,
+                        member.displayName,
+                        ranking.date,
+                        member.longevityMinutes,
+                        member.completedTaskCount,
+                        isoString(member.updatedAt),
+                        member.rank
+                    ]
+                )
+            }
+        }
+    }
+
+    public func loadTeamRankingCache(teamCodeHash: String, date: String) throws -> TeamRanking? {
+        try dbQueue.read { db -> TeamRanking? in
+            let rows = try Row.fetchAll(
+                db,
+                sql: """
+                SELECT member_id_hash, display_name, longevity_minutes, completed_task_count, updated_at, rank
+                FROM team_snapshots_cache
+                WHERE team_code_hash = ? AND date = ?
+                ORDER BY rank ASC
+                """,
+                arguments: [teamCodeHash, date]
+            )
+
+            guard !rows.isEmpty else {
+                return nil
+            }
+
+            let members = rows.map { row in
+                TeamRankingMember(
+                    rank: row["rank"],
+                    memberIdHash: row["member_id_hash"],
+                    displayName: row["display_name"],
+                    longevityMinutes: row["longevity_minutes"],
+                    completedTaskCount: row["completed_task_count"],
+                    updatedAt: self.date(from: row["updated_at"] as String)
+                )
+            }
+
+            return TeamRanking(
+                teamCodeHash: teamCodeHash,
+                date: date,
+                generatedAt: Date(),
+                members: members
+            )
+        }
+    }
+
     public func clearAllData() throws {
         try dbQueue.write { db in
             for table in [
@@ -330,6 +470,17 @@ private extension AppDatabase {
                 table.column("key", .text).primaryKey()
                 table.column("value", .text).notNull()
                 table.column("updated_at", .text).notNull()
+            }
+        }
+
+        migrator.registerMigration("v2_team_profile_cache") { db in
+            try db.alter(table: "team_profile") { table in
+                table.add(column: "team_code", .text)
+                table.add(column: "member_id", .text)
+            }
+
+            try db.alter(table: "team_snapshots_cache") { table in
+                table.add(column: "rank", .integer).notNull().defaults(to: 0)
             }
         }
 
