@@ -61,7 +61,7 @@ struct HVProgressBar: View {
                 Capsule()
                     .fill(HVColor.border.opacity(0.55))
                 Capsule()
-                    .fill(HVColor.calmAccent)
+                    .fill(value >= 1 ? HVColor.warmAccent : HVColor.calmAccent)
                     .frame(width: max(0, min(proxy.size.width, proxy.size.width * value)))
             }
         }

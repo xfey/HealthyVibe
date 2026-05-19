@@ -93,26 +93,8 @@ final class AppModel: ObservableObject {
         "今日 \(todayTaskState.totalLongevityMinutes) / \(todayTaskState.targetMinutes) 分钟"
     }
 
-    var canDeliverTask: Bool {
-        !todayTaskState.remainingItems.isEmpty
-    }
-
     var canSwitchTask: Bool {
         todayTaskState.remainingItems.count > 1 || todayTaskState.currentTask != nil
-    }
-
-    func deliverManualTask() {
-        do {
-            if let database {
-                _ = try database.deliverTask(in: &todayTaskState, source: "manual")
-            } else {
-                _ = taskEngine.deliverTask(in: &todayTaskState)
-            }
-
-            try reloadHistory()
-        } catch {
-            recordError("下发任务失败：\(error.localizedDescription)")
-        }
     }
 
     func completeCurrentTask() {
@@ -236,6 +218,10 @@ final class AppModel: ObservableObject {
 
     func status(for agent: AgentKind) -> AgentConnectionStatus {
         agentConnectionStatuses[agent] ?? .notConnected
+    }
+
+    var hasConnectedAgent: Bool {
+        AgentKind.allCases.contains { status(for: $0) == .connected }
     }
 
     var teamRankText: String? {
@@ -493,9 +479,9 @@ final class AppModel: ObservableObject {
         switch reason {
         case .promptSubmitted:
             let agentName = source == "debug" ? "Agent" : source.capitalized
-            return "\(agentName) 开始干活了。你先\(item.template.title)，别盯着它想。"
+            return "\(agentName) 开始干活了。你先\(item.template.title)，别盯着进度条等。"
         case .activeFallback:
-            return "没等到新的 agent，也该给身体发个 keepalive 了。\(item.template.title)刚好。"
+            return "这一小时没等到新的 agent，也该给身体发个 keepalive 了。先\(item.template.title)。"
         }
     }
 }

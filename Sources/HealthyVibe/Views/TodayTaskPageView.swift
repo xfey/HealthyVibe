@@ -110,12 +110,6 @@ struct TodayTaskPageView: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(HVColor.mutedText)
                     Spacer(minLength: 0)
-                    Button("模拟下发") {
-                        appModel.deliverManualTask()
-                    }
-                    .buttonStyle(HVSecondaryButtonStyle())
-                    .frame(width: 92)
-                    .disabled(!appModel.canDeliverTask)
                 }
             }
         }
@@ -129,18 +123,19 @@ struct TodayTaskPageView: View {
                     .foregroundStyle(HVColor.primaryText)
                     .lineLimit(2)
 
-                Text("超过 30 分钟后，新的 prompt 会触发一次提醒。Phase 1 可以先手动模拟下发。")
+                Text(waitingMessage)
                     .font(.system(size: 13))
                     .foregroundStyle(HVColor.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
 
                 progressBlock
 
-                Button("模拟下发任务") {
-                    appModel.deliverManualTask()
+                if !appModel.hasConnectedAgent {
+                    Button("去设置连接 Agent") {
+                        appModel.selectedPage = .settings
+                    }
+                    .buttonStyle(HVPrimaryButtonStyle())
                 }
-                .buttonStyle(HVPrimaryButtonStyle())
-                .disabled(!appModel.canDeliverTask)
             }
         }
     }
@@ -169,12 +164,34 @@ struct TodayTaskPageView: View {
 
     private var progressBlock: some View {
         VStack(alignment: .leading, spacing: HVSpacing.small) {
-            Text(appModel.todayProgressText)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(HVColor.secondaryText)
+            HStack(spacing: HVSpacing.small) {
+                Text(appModel.todayProgressText)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(HVColor.secondaryText)
+
+                if appModel.todayTaskState.progressFraction >= 1 {
+                    Text("目标达成")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(HVColor.calmAccent)
+                        .padding(.horizontal, HVSpacing.small)
+                        .padding(.vertical, 2)
+                        .background(HVColor.successFill)
+                        .clipShape(Capsule())
+                }
+
+                Spacer(minLength: 0)
+            }
 
             HVProgressBar(value: appModel.todayTaskState.progressFraction)
         }
+    }
+
+    private var waitingMessage: String {
+        if appModel.hasConnectedAgent {
+            return "超过 30 分钟后，新的 prompt 会触发一次提醒；连续 1 小时活跃但没有 hook，也会兜底发一张。"
+        }
+
+        return "先在设置页连接 Claude Code 或 Codex。连接后，新的 prompt 会在冷却结束时触发提醒。"
     }
 
     private func teamRankBadge(_ text: String) -> some View {

@@ -10,13 +10,13 @@ enum NotificationPermissionState: Equatable {
     var displayText: String {
         switch self {
         case .unknown:
-            "Unknown"
+            "未知"
         case .notDetermined:
-            "Not Requested"
+            "未请求"
         case .enabled:
-            "Enabled"
+            "已开启"
         case .denied:
-            "Disabled"
+            "已关闭"
         }
     }
 

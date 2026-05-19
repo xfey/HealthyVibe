@@ -185,6 +185,26 @@ HEALTHYVIBE_SKIP_OPEN=1 \
 
 当前未执行真实 Apple notarization，因为本地没有 Developer ID 证书和 notary profile。
 
+## Phase 7 验证
+
+已验证：
+
+```bash
+swift test
+make bundle
+cd relay && npm run typecheck
+cd relay && npm test
+```
+
+Phase 7 调整：
+
+- 今日页移除开发期手动下发入口。
+- 今日页增加未连接 Agent 入口和目标达成标签。
+- 通知状态、Agent 状态和设置页操作中文化。
+- 设置页隐私说明覆盖 hook payload、本地历史和 Relay 上传边界。
+- 日历累计文案允许两行展示，避免小 popover 内长文案溢出。
+- 新增 `README.md` 和 `QA.md`。
+
 ## 当前架构
 
 ```text
@@ -221,6 +241,8 @@ Tests/HealthyVibeTeamTests/
   TeamTests         Phase 5 小队身份和 Relay client 测试
 Resources/
   Info.plist        app bundle 元信息，包含 LSUIElement
+README.md           项目说明和本地开发入口
+QA.md               MVP 发布前 QA 清单
 Scripts/
   build_app_bundle.sh
   package_release.sh

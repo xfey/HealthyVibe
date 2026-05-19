@@ -18,8 +18,8 @@ struct SettingsPageView: View {
                     agentRow(.codex)
                 }
 
-                settingsSection("Notifications") {
-                    settingsRow(title: "System Notification", value: appModel.notificationPermissionState.displayText)
+                settingsSection("通知") {
+                    settingsRow(title: "系统通知", value: appModel.notificationPermissionState.displayText)
 
                     if appModel.notificationPermissionState == .notDetermined {
                         Button("开启通知") {
@@ -57,23 +57,29 @@ struct SettingsPageView: View {
                     }
                 }
 
-                settingsSection("Team") {
+                settingsSection("小队") {
                     teamSection
                 }
 
-                settingsSection("Preferences") {
+                settingsSection("偏好") {
                     settingsRow(title: "每日目标", value: "\(appModel.todayTaskState.targetMinutes) 分钟")
                     settingsRow(title: "冷却时间", value: "30 分钟")
                 }
 
-                settingsSection("Privacy") {
+                settingsSection("隐私") {
                     Text("延寿分钟是 HealthyVibe 内的娱乐积分，用于鼓励短暂休息和轻量活动，不构成医学建议。")
                         .font(.system(size: 11))
                         .foregroundStyle(HVColor.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    Text("本地 hook 只记录最小事件，不保存 prompt、代码路径、diff、命令内容或原始 payload；Relay 只接收小队 hash 和当天延寿结果。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(HVColor.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, HVSpacing.small)
                 }
 
-                settingsSection("Storage") {
+                settingsSection("本地数据") {
                     Text(appModel.paths.applicationSupportDirectory.path)
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundStyle(HVColor.mutedText)
@@ -178,9 +184,12 @@ struct SettingsPageView: View {
             }
             .padding(.top, HVSpacing.small)
         } else {
+            settingsRow(title: "小队", value: "未加入")
+
             TextField("输入小队码", text: $teamCodeInput)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(size: 12))
+                .padding(.top, HVSpacing.xsmall)
 
             HStack(spacing: HVSpacing.small) {
                 Button("创建小队") {
@@ -255,7 +264,7 @@ struct SettingsPageView: View {
             }
 
             HStack(spacing: HVSpacing.small) {
-                Button(appModel.status(for: agent) == .connected ? "Disconnect" : "Connect") {
+                Button(appModel.status(for: agent) == .connected ? "断开" : "连接") {
                     if appModel.status(for: agent) == .connected {
                         appModel.disconnectAgent(agent)
                     } else {
@@ -264,7 +273,7 @@ struct SettingsPageView: View {
                 }
                 .buttonStyle(HVSecondaryButtonStyle())
 
-                Button("Test") {
+                Button("测试") {
                     appModel.testAgentHook(agent)
                 }
                 .buttonStyle(HVSecondaryButtonStyle())

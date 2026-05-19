@@ -134,6 +134,9 @@ struct CalendarPageView: View {
             Text(value)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(HVColor.primaryText)
+                .lineLimit(2)
+                .minimumScaleFactor(0.9)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
     }

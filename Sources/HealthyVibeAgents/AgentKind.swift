@@ -34,13 +34,13 @@ public enum AgentConnectionStatus: String, Codable {
     public var displayText: String {
         switch self {
         case .connected:
-            "Connected"
+            "已连接"
         case .notConnected:
-            "Not Connected"
+            "未连接"
         case .configMissing:
-            "Not Connected"
+            "未连接"
         case .invalidConfig:
-            "Invalid Config"
+            "配置异常"
         }
     }
 }
