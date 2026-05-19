@@ -1,45 +1,18 @@
 import SwiftUI
+import HealthyVibeCore
 
 struct TodayTaskPageView: View {
     @EnvironmentObject private var appModel: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: HVSpacing.large) {
+        VStack(alignment: .leading, spacing: HVSpacing.medium) {
             if let message = appModel.lastErrorMessage {
                 statusBanner(message)
             }
 
-            HVCard {
-                VStack(alignment: .leading, spacing: HVSpacing.medium) {
-                    Text("等待下一次 agent 开工")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(HVColor.primaryText)
-                        .lineLimit(2)
+            card
 
-                    Text("Phase 1 会接入每日固定任务池。现在先保留核心菜单栏体验。")
-                        .font(.system(size: 13))
-                        .foregroundStyle(HVColor.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text("今日 0 / 30 分钟")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(HVColor.secondaryText)
-
-                    HVProgressBar(value: 0)
-
-                    HStack(spacing: HVSpacing.small) {
-                        Button("完成") {}
-                            .buttonStyle(HVPrimaryButtonStyle())
-                            .disabled(true)
-                        Button("换一个") {}
-                            .buttonStyle(HVSecondaryButtonStyle())
-                            .disabled(true)
-                    }
-                    .opacity(0.55)
-                }
-            }
-
-            Text("本阶段只搭好 UI 骨架、目录和状态边界，不引入任务逻辑。")
+            Text("Phase 1 使用内存任务池；关闭 app 后的历史保存会在 Phase 2 接入 SQLite。")
                 .font(.system(size: 12))
                 .foregroundStyle(HVColor.mutedText)
                 .fixedSize(horizontal: false, vertical: true)
@@ -47,6 +20,159 @@ struct TodayTaskPageView: View {
             Spacer(minLength: 0)
         }
         .padding(HVSpacing.large)
+    }
+
+    @ViewBuilder
+    private var card: some View {
+        switch appModel.todayTaskState.cardStatus {
+        case .pending(let item):
+            pendingTaskCard(item)
+        case .completed(let summary):
+            completedTaskCard(summary)
+        case .allCompleted:
+            allCompletedCard
+        case .waiting:
+            waitingCard
+        }
+    }
+
+    private func pendingTaskCard(_ item: DailyTaskItem) -> some View {
+        HVCard {
+            VStack(alignment: .leading, spacing: HVSpacing.medium) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(item.template.title)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(HVColor.primaryText)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.88)
+
+                    Spacer(minLength: HVSpacing.small)
+
+                    Text("\(item.completedCount)/\(item.template.maxDailyCount)")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(HVColor.calmAccent)
+                        .padding(.horizontal, HVSpacing.small)
+                        .padding(.vertical, 3)
+                        .background(HVColor.successFill)
+                        .clipShape(Capsule())
+                }
+
+                Text(item.template.subtitle)
+                    .font(.system(size: 13))
+                    .foregroundStyle(HVColor.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(LongevityCopy.rewardLine(for: item))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(HVColor.warmAccent)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                progressBlock
+
+                HStack(spacing: HVSpacing.small) {
+                    Button("完成") {
+                        appModel.completeCurrentTask()
+                    }
+                    .buttonStyle(HVPrimaryButtonStyle())
+
+                    Button("换一个") {
+                        appModel.switchCurrentTask()
+                    }
+                    .buttonStyle(HVSecondaryButtonStyle())
+                    .disabled(!appModel.canSwitchTask)
+                }
+            }
+        }
+    }
+
+    private func completedTaskCard(_ summary: TaskCompletionSummary) -> some View {
+        HVCard {
+            VStack(alignment: .leading, spacing: HVSpacing.medium) {
+                Text("本轮已续命")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(HVColor.primaryText)
+
+                Text("+\(summary.rewardMinutes) 分钟")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(HVColor.calmAccent)
+
+                Text(LongevityCopy.totalLine(forTotalMinutes: summary.totalLongevityMinutes))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(HVColor.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                progressBlock
+
+                HStack(spacing: HVSpacing.small) {
+                    Text("下一次 agent 开工后再提醒")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(HVColor.mutedText)
+                    Spacer(minLength: 0)
+                    Button("模拟下发") {
+                        appModel.deliverManualTask()
+                    }
+                    .buttonStyle(HVSecondaryButtonStyle())
+                    .frame(width: 92)
+                    .disabled(!appModel.canDeliverTask)
+                }
+            }
+        }
+    }
+
+    private var waitingCard: some View {
+        HVCard {
+            VStack(alignment: .leading, spacing: HVSpacing.medium) {
+                Text("等待下一次 agent 开工")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(HVColor.primaryText)
+                    .lineLimit(2)
+
+                Text("超过 30 分钟后，新的 prompt 会触发一次提醒。Phase 1 可以先手动模拟下发。")
+                    .font(.system(size: 13))
+                    .foregroundStyle(HVColor.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                progressBlock
+
+                Button("模拟下发任务") {
+                    appModel.deliverManualTask()
+                }
+                .buttonStyle(HVPrimaryButtonStyle())
+                .disabled(!appModel.canDeliverTask)
+            }
+        }
+    }
+
+    private var allCompletedCard: some View {
+        HVCard {
+            VStack(alignment: .leading, spacing: HVSpacing.medium) {
+                Text("今日任务池已清空")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(HVColor.primaryText)
+
+                Text("所有固定任务次数都已完成，今天不用继续刷任务。")
+                    .font(.system(size: 13))
+                    .foregroundStyle(HVColor.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(LongevityCopy.totalLine(forTotalMinutes: appModel.todayTaskState.totalLongevityMinutes))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(HVColor.calmAccent)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                progressBlock
+            }
+        }
+    }
+
+    private var progressBlock: some View {
+        VStack(alignment: .leading, spacing: HVSpacing.small) {
+            Text(appModel.todayProgressText)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(HVColor.secondaryText)
+
+            HVProgressBar(value: appModel.todayTaskState.progressFraction)
+        }
     }
 
     private func statusBanner(_ message: String) -> some View {

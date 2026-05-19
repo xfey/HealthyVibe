@@ -1,6 +1,8 @@
 import SwiftUI
+import HealthyVibeCore
 
 struct CalendarPageView: View {
+    @EnvironmentObject private var appModel: AppModel
     private let calendar = Calendar.current
     private let referenceDate = Date()
 
@@ -21,9 +23,9 @@ struct CalendarPageView: View {
             calendarGrid
 
             VStack(alignment: .leading, spacing: HVSpacing.small) {
-                metricRow(title: "今日", value: "0 分钟")
-                metricRow(title: "连续", value: "0 天")
-                metricRow(title: "累计", value: "0 分钟，先从一次远眺开始")
+                metricRow(title: "今日", value: "\(appModel.todayTaskState.totalLongevityMinutes) 分钟")
+                metricRow(title: "连续", value: appModel.todayTaskState.completedTaskCount > 0 ? "1 天" : "0 天")
+                metricRow(title: "累计", value: LongevityCopy.totalLine(forTotalMinutes: appModel.todayTaskState.totalLongevityMinutes))
             }
             .padding(.top, HVSpacing.small)
 

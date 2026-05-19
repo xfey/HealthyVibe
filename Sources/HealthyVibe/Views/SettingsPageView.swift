@@ -20,7 +20,7 @@ struct SettingsPageView: View {
                 }
 
                 settingsSection("Preferences") {
-                    settingsRow(title: "每日目标", value: "30 分钟")
+                    settingsRow(title: "每日目标", value: "\(appModel.todayTaskState.targetMinutes) 分钟")
                     settingsRow(title: "冷却时间", value: "30 分钟")
                 }
 

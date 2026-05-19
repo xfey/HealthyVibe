@@ -36,6 +36,17 @@ open -n .build/HealthyVibe.app
 ~/Library/Application Support/HealthyVibe/hooks/
 ```
 
+## Phase 1 验证
+
+已验证：
+
+```bash
+swift test
+make bundle
+```
+
+Phase 1 的任务引擎目前只保存内存状态，Phase 2 会把每日任务池、完成记录和日历统计接入 SQLite。
+
 ## 当前架构
 
 ```text
@@ -45,6 +56,10 @@ Sources/HealthyVibe/
   Infrastructure/   本地目录、日志、数据库接口预留
   Models/           轻量 UI/domain model
   Views/            Popover 三页视图
+Sources/HealthyVibeCore/
+  TaskEngine        本地任务池、随机下发、完成状态
+Tests/HealthyVibeCoreTests/
+  TaskEngineTests   Phase 1 核心规则测试
 Resources/
   Info.plist        app bundle 元信息，包含 LSUIElement
 Scripts/

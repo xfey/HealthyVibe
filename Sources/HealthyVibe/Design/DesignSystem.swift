@@ -72,29 +72,49 @@ struct HVProgressBar: View {
 }
 
 struct HVPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(Color.white.opacity(isEnabled ? 1 : 0.72))
             .frame(height: 32)
             .frame(maxWidth: .infinity)
-            .background(configuration.isPressed ? HVColor.warmAccent.opacity(0.82) : HVColor.warmAccent)
+            .background(backgroundColor(isPressed: configuration.isPressed))
             .clipShape(RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous))
+    }
+
+    private func backgroundColor(isPressed: Bool) -> Color {
+        guard isEnabled else {
+            return HVColor.border
+        }
+
+        return isPressed ? HVColor.warmAccent.opacity(0.82) : HVColor.warmAccent
     }
 }
 
 struct HVSecondaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(HVColor.primaryText)
+            .foregroundStyle(isEnabled ? HVColor.primaryText : HVColor.mutedText)
             .frame(height: 32)
             .frame(maxWidth: .infinity)
-            .background(configuration.isPressed ? HVColor.border.opacity(0.55) : HVColor.surface)
+            .background(backgroundColor(isPressed: configuration.isPressed))
             .clipShape(RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous)
                     .stroke(HVColor.border, lineWidth: 1)
             )
+    }
+
+    private func backgroundColor(isPressed: Bool) -> Color {
+        guard isEnabled else {
+            return HVColor.surface.opacity(0.62)
+        }
+
+        return isPressed ? HVColor.border.opacity(0.55) : HVColor.surface
     }
 }
