@@ -16,9 +16,6 @@ rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$BUILD_DIR/HealthyVibe" "$APP_DIR/Contents/MacOS/HealthyVibe"
 cp "Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
-if [[ -f "Resources/HealthyVibe.icns" ]]; then
-  cp "Resources/HealthyVibe.icns" "$APP_DIR/Contents/Resources/HealthyVibe.icns"
-fi
 chmod +x "$APP_DIR/Contents/MacOS/HealthyVibe"
 
 echo "$APP_DIR"
