@@ -154,6 +154,9 @@ brew install --cask healthyvibe
 - App 需要签名和 notarization。
 - 安装后要确保菜单栏 app 能被用户顺利打开。
 - 可选提供透明安装脚本，但 Homebrew 应作为推荐路径。
+- Homebrew 5.1 起本地 cask 验证需要放入 tap；直接传任意路径会被拒绝。
+- Cask 由 `Scripts/generate_homebrew_cask.sh` 根据 release zip 自动生成 sha256。
+- Cask uninstall preflight 会清理 HealthyVibe 自己写入的 Claude Code / Codex hook handler。
 
 ### 3.2 macOS App Distribution
 
@@ -165,6 +168,12 @@ brew install --cask healthyvibe
 - 是否进入 Mac App Store。
 - 是否只做直接分发 + Homebrew Cask。
 - 开机启动和通知权限在非 App Store 分发下的具体实现细节。
+
+实现记录：
+
+- `Scripts/package_release.sh` 支持 `HEALTHYVIBE_SIGN_IDENTITY`。
+- `Scripts/package_release.sh` 支持 `HEALTHYVIBE_NOTARY_PROFILE`，使用 `xcrun notarytool` 和 `xcrun stapler`。
+- `Scripts/install.sh` 支持 `HEALTHYVIBE_ZIP_URL` 和 `HEALTHYVIBE_ZIP_PATH`。
 
 ## 4. 本地数据
 

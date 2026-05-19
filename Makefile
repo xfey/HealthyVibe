@@ -1,4 +1,4 @@
-.PHONY: build bundle release-bundle run clean
+.PHONY: build bundle release-bundle package run clean
 
 build:
 	swift build
@@ -8,6 +8,9 @@ bundle:
 
 release-bundle:
 	./Scripts/build_app_bundle.sh release
+
+package:
+	./Scripts/package_release.sh
 
 run: bundle
 	open .build/HealthyVibe.app

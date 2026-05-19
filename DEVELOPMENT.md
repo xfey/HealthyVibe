@@ -146,6 +146,45 @@ Sources/HealthyVibeTeam/
 - Relay 不接收、不保存 prompt、代码、diff、路径或 hook 原始 payload。
 - Relay 保留最近 3 天数据，个人长期历史仍由本地 SQLite 保存。
 
+## Phase 6 验证
+
+已验证：
+
+```bash
+make package
+ruby -c dist/healthyvibe.rb
+```
+
+并使用临时 Homebrew tap、临时 `HOME` 和临时 `--appdir` 验证过 cask 安装/卸载：
+
+```bash
+brew install --cask healthyvibe/local/healthyvibe
+brew uninstall --cask healthyvibe/local/healthyvibe
+```
+
+透明安装脚本本地验证：
+
+```bash
+HEALTHYVIBE_ZIP_PATH="$PWD/dist/HealthyVibe-0.1.0.zip" \
+HEALTHYVIBE_INSTALL_DIR="$(mktemp -d)/apps" \
+HEALTHYVIBE_SKIP_OPEN=1 \
+./Scripts/install.sh
+```
+
+当前发布脚本：
+
+- `Scripts/package_release.sh`：release build、可选签名、可选 notarization、zip、sha256、cask。
+- `Scripts/generate_homebrew_cask.sh`：根据 zip 生成 Homebrew Cask。
+- `Scripts/install.sh`：透明安装脚本，支持 URL 或本地 zip。
+
+发布凭据：
+
+- `HEALTHYVIBE_SIGN_IDENTITY`：Developer ID Application 证书名称。
+- `HEALTHYVIBE_NOTARY_PROFILE`：`xcrun notarytool store-credentials` 保存的 keychain profile。
+- `HEALTHYVIBE_RELEASE_URL`：生成线上 cask 时写入的 release artifact URL。
+
+当前未执行真实 Apple notarization，因为本地没有 Developer ID 证书和 notary profile。
+
 ## 当前架构
 
 ```text
@@ -184,6 +223,10 @@ Resources/
   Info.plist        app bundle 元信息，包含 LSUIElement
 Scripts/
   build_app_bundle.sh
+  package_release.sh
+  generate_homebrew_cask.sh
+  install.sh
+DISTRIBUTION.md     签名、公证、Homebrew Cask 和安装脚本说明
 ```
 
 ## Phase 0 范围

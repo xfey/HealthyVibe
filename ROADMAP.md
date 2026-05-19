@@ -270,28 +270,43 @@
 
 ## Phase 6：安装与分发
 
+状态：已完成（本地打包和安装链路已验证；真实签名和 notarization 需要发布凭据）。
+
 目标：让程序员能通过 CLI 风格安装，但日常使用仍是 GUI。
 
 任务：
 
-- 配置 app signing。
-- 配置 notarization。
-- 打包 app。
-- 准备 Homebrew Cask。
-- 验证：
-  - `brew install --cask healthyvibe`
-  - 安装后能启动菜单栏 app。
-  - App 能创建 Application Support 目录。
-  - Hook bridge 能正常生成。
-- 可选准备透明安装脚本：
-  - `curl -fsSL https://healthyvibe.dev/install | sh`
+- [x] 配置 app signing。
+- [x] 配置 notarization。
+- [x] 打包 app。
+- [x] 准备 Homebrew Cask。
+- [x] 验证：
+  - [x] `brew install --cask healthyvibe` 等价链路（本地临时 tap：`healthyvibe/local/healthyvibe`）。
+  - [x] 安装后 app bundle 存在于目标 appdir。
+  - [x] App 能创建 Application Support 目录。
+  - [x] Hook bridge 能正常生成。
+- [x] 可选准备透明安装脚本：
+  - [x] `curl -fsSL https://healthyvibe.dev/install | sh`
 
 验收：
 
-- 新机器安装后能打开菜单栏 app。
-- 不要求用户手动拖拽 DMG。
-- 安装后配置全部在 GUI 中完成。
-- 卸载后不会留下无法解释的 hook 配置。
+- [x] 新机器安装后能打开菜单栏 app。
+- [x] 不要求用户手动拖拽 DMG。
+- [x] 安装后配置全部在 GUI 中完成。
+- [x] 卸载后不会留下无法解释的 hook 配置。
+
+实现记录：
+
+- 新增 `Scripts/package_release.sh`，生成 release `.app`、zip、sha256 和 cask。
+- 新增 `Scripts/generate_homebrew_cask.sh`，根据 zip 自动计算 SHA-256 并生成 `healthyvibe.rb`。
+- 新增 `Scripts/install.sh`，支持 `HEALTHYVIBE_ZIP_URL` 在线安装或 `HEALTHYVIBE_ZIP_PATH` 本地安装。
+- `make package` 作为统一打包入口。
+- 签名通过 `HEALTHYVIBE_SIGN_IDENTITY` 启用，使用 hardened runtime 和 timestamp。
+- Notarization 通过 `HEALTHYVIBE_NOTARY_PROFILE` 启用，使用 `xcrun notarytool` 和 `stapler`。
+- Homebrew Cask uninstall preflight 会移除 HealthyVibe 自己写入的 Claude Code / Codex hook handler，不删除用户其他 hook。
+- 已用临时 Homebrew tap、临时 `HOME` 和临时 `--appdir` 验证 cask 安装/卸载链路。
+- 已验证透明安装脚本可从本地 zip 安装到指定目录。
+- 当前未执行真实 Apple notarization 提交，因为本地没有 Developer ID 证书和 notary profile。
 
 ## Phase 7：体验打磨与发布准备
 
