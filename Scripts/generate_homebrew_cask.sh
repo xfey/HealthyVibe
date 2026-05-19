@@ -9,6 +9,7 @@ OUTPUT_PATH="${2:-dist/healthyvibe.rb}"
 URL_VALUE="${3:-}"
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)"
+BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Resources/Info.plist)"
 SHA256="$(shasum -a 256 "$ZIP_PATH" | awk '{print $1}')"
 
 if [[ -z "$URL_VALUE" ]]; then
@@ -32,7 +33,7 @@ cask "healthyvibe" do
 
   app "HealthyVibe.app"
 
-  uninstall quit: "dev.healthyvibe.app"
+  uninstall quit: "$BUNDLE_ID"
 
   uninstall_preflight do
     require "json"
@@ -93,7 +94,7 @@ cask "healthyvibe" do
 
   zap trash: [
     "~/Library/Application Support/HealthyVibe",
-    "~/Library/Preferences/dev.healthyvibe.app.plist",
+    "~/Library/Preferences/$BUNDLE_ID.plist",
   ]
 end
 RUBY

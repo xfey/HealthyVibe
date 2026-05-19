@@ -74,3 +74,7 @@ Relay 只保存小队 hash、匿名 member hash、日期、延寿分钟、完成
 ## 免责声明
 
 延寿分钟是 HealthyVibe 内的娱乐积分，用于鼓励短暂休息和轻量活动，不构成医学建议。
+
+## License
+
+MIT
