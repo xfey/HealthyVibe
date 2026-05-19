@@ -148,6 +148,57 @@ public final class AppDatabase {
         }
     }
 
+    public func loadLastReminderDate() throws -> Date? {
+        try dbQueue.read { db in
+            guard let value = try String.fetchOne(
+                db,
+                sql: "SELECT value FROM app_settings WHERE key = 'lastReminderAt'"
+            ) else {
+                return nil
+            }
+
+            return date(from: value)
+        }
+    }
+
+    public func saveLastReminderDate(_ date: Date) throws {
+        try dbQueue.write { db in
+            try db.execute(
+                sql: """
+                INSERT INTO app_settings (key, value, updated_at)
+                VALUES ('lastReminderAt', ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = excluded.updated_at
+                """,
+                arguments: [isoString(date), isoString(Date())]
+            )
+        }
+    }
+
+    public func recordHookEvent(
+        source: String,
+        event: String,
+        receivedAt: Date,
+        processedAt: Date? = nil
+    ) throws {
+        try dbQueue.write { db in
+            try db.execute(
+                sql: """
+                INSERT INTO hook_events (id, source, event, received_at, processed_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                arguments: [
+                    UUID().uuidString,
+                    source,
+                    event,
+                    isoString(receivedAt),
+                    processedAt.map(isoString)
+                ]
+            )
+        }
+    }
+
     public func clearAllData() throws {
         try dbQueue.write { db in
             for table in [
@@ -175,6 +226,12 @@ public final class AppDatabase {
                 sql: "SELECT name FROM sqlite_master WHERE type = 'table'"
             )
             return Set(names)
+        }
+    }
+
+    public func debugCount(in table: String) throws -> Int {
+        try dbQueue.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(table)") ?? 0
         }
     }
 }

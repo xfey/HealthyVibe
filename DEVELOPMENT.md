@@ -65,22 +65,42 @@ open -n .build/HealthyVibe.app
 
 GRDB 当前解析版本记录在 `Package.resolved`：`7.10.0`。
 
+## Phase 3 验证
+
+已验证：
+
+```bash
+swift test
+make bundle
+open -n .build/HealthyVibe.app
+```
+
+当前通知和活跃时间实现：
+
+- `NotificationService`：通知权限、系统通知、点击通知打开今日任务页。
+- `ActiveTimeTracker`：监听睡眠、屏幕睡眠、会话失活/恢复，兜底计时只累计活跃时间。
+- `ActiveTimeAccumulator`：纯逻辑计时器，已单测覆盖。
+- 设置页提供 `模拟 prompt_submitted` debug action。
+
 ## 当前架构
 
 ```text
 Sources/HealthyVibe/
   App/              AppDelegate、菜单栏控制器、全局状态
+  App/              通知服务、活跃时间 tracker
   Design/           颜色、间距、按钮、进度条等基础设计系统
   Infrastructure/   本地目录、日志、数据库接口预留
   Models/           轻量 UI/domain model
   Views/            Popover 三页视图
 Sources/HealthyVibeCore/
+  ActiveTime        活跃时间累计规则
   TaskEngine        本地任务池、随机下发、完成状态
   HistoryModels     日历摘要和历史总览模型
 Sources/HealthyVibeStorage/
   AppDatabase       GRDB migrations、任务状态持久化、日历统计
 Tests/HealthyVibeCoreTests/
   TaskEngineTests   Phase 1 核心规则测试
+  ActiveTimeTests   Phase 3 活跃时间规则测试
 Tests/HealthyVibeStorageTests/
   AppDatabaseTests  Phase 2 持久化规则测试
 Resources/

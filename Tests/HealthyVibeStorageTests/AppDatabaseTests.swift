@@ -104,6 +104,22 @@ final class AppDatabaseTests: XCTestCase {
         XCTAssertEqual(clearedState.totalLongevityMinutes, 0)
         XCTAssertTrue(clearedSummaries.isEmpty)
     }
+
+    func testPersistsReminderDateAndHookEvents() throws {
+        let database = try makeDatabase()
+        let date = fixedDate(dayOffset: 0)
+
+        try database.saveLastReminderDate(date)
+        XCTAssertEqual(try database.loadLastReminderDate(), date)
+
+        try database.recordHookEvent(
+            source: "debug",
+            event: "prompt_submitted",
+            receivedAt: date,
+            processedAt: date
+        )
+        XCTAssertEqual(try database.debugCount(in: "hook_events"), 1)
+    }
 }
 
 private extension AppDatabaseTests {

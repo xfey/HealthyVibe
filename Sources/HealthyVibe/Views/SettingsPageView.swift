@@ -13,7 +13,42 @@ struct SettingsPageView: View {
                 }
 
                 settingsSection("Notifications") {
-                    settingsRow(title: "System Notification", value: "Phase 3")
+                    settingsRow(title: "System Notification", value: appModel.notificationPermissionState.displayText)
+
+                    if appModel.notificationPermissionState == .notDetermined {
+                        Button("开启通知") {
+                            appModel.requestNotificationPermission()
+                        }
+                        .buttonStyle(HVSecondaryButtonStyle())
+                        .padding(.top, HVSpacing.small)
+                    }
+
+                    if appModel.notificationPermissionState == .denied {
+                        Text("通知关闭时仍会记录事件和更新任务，但不会弹出系统通知。")
+                            .font(.system(size: 11))
+                            .foregroundStyle(HVColor.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Button("打开系统设置") {
+                            appModel.openNotificationSettings()
+                        }
+                        .buttonStyle(HVSecondaryButtonStyle())
+                        .padding(.top, HVSpacing.small)
+                    }
+
+                    Button("模拟 prompt_submitted") {
+                        appModel.simulatePromptSubmitted()
+                    }
+                    .buttonStyle(HVSecondaryButtonStyle())
+                    .padding(.top, HVSpacing.small)
+
+                    if let message = appModel.lastReminderMessage {
+                        Text(message)
+                            .font(.system(size: 11))
+                            .foregroundStyle(HVColor.mutedText)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, HVSpacing.xsmall)
+                    }
                 }
 
                 settingsSection("Team") {

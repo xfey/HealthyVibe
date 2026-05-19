@@ -27,12 +27,9 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             return
         }
 
-        if popover.isShown {
-            popover.performClose(nil)
-            return
+        if !popover.isShown {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
-
-        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()
     }
 
@@ -65,6 +62,10 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
 
     @objc
     private func togglePopover(_ sender: Any?) {
-        show(page: appModel.selectedPage)
+        if popover.isShown {
+            popover.performClose(nil)
+        } else {
+            show(page: appModel.selectedPage)
+        }
     }
 }

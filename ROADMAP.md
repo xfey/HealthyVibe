@@ -139,29 +139,41 @@
 
 ## Phase 3：通知与活跃时间
 
+状态：已完成。
+
 目标：在没有真实 hook 的情况下跑通提醒节奏。
 
 任务：
 
-- 接入 `UNUserNotificationCenter`。
-- 实现通知权限申请和状态展示。
-- 点击通知后打开菜单栏 popover 的今日任务页。
-- 实现 30 分钟任务下发冷却。
-- 实现 60 分钟活跃无 hook 兜底提醒。
-- 实现 active time tracker：
-  - 睡眠不累计。
-  - 锁屏不累计。
-  - 熄屏不累计。
-  - 唤醒 / 解锁后继续累计。
-- 提供测试按钮或 debug action 模拟 `prompt_submitted`。
+- [x] 接入 `UNUserNotificationCenter`。
+- [x] 实现通知权限申请和状态展示。
+- [x] 点击通知后打开菜单栏 popover 的今日任务页。
+- [x] 实现 30 分钟任务下发冷却。
+- [x] 实现 60 分钟活跃无 hook 兜底提醒。
+- [x] 实现 active time tracker：
+  - [x] 睡眠不累计。
+  - [x] 锁屏不累计。
+  - [x] 熄屏不累计。
+  - [x] 唤醒 / 解锁后继续累计。
+- [x] 提供测试按钮或 debug action 模拟 `prompt_submitted`。
 
 验收：
 
-- 通知权限未开启时，设置页能解释原因。
-- 模拟 prompt 后，如果超过冷却时间，收到系统通知。
-- 点击通知打开 popover。
-- 睡眠或锁屏时间不会触发兜底提醒。
-- 完成任务后不会立即补发下一张。
+- [x] 通知权限未开启时，设置页能解释原因。
+- [x] 模拟 prompt 后，如果超过冷却时间，收到系统通知。
+- [x] 点击通知打开 popover。
+- [x] 睡眠或锁屏时间不会触发兜底提醒。
+- [x] 完成任务后不会立即补发下一张。
+
+实现记录：
+
+- 新增 `NotificationService`，使用系统通知，不做自定义弹窗和通知按钮。
+- 设置页展示通知权限状态，支持申请权限、打开系统设置、模拟 `prompt_submitted`。
+- 模拟 prompt 会记录最小 hook event、按 30 分钟冷却下发任务，并在权限允许时发送系统通知。
+- 点击通知通过 `UNUserNotificationCenterDelegate` 打开菜单栏 popover 的今日任务页。
+- 新增 `ActiveTimeTracker`，监听睡眠、屏幕睡眠、会话失活，以及唤醒、屏幕唤醒、会话恢复。
+- 新增 `ActiveTimeAccumulator` 单测，确保非活跃时间不累计，hook event 会重置 60 分钟兜底计时。
+- 已通过 `swift test` 和 `make bundle`，并验证真实 app 可启动。
 
 ## Phase 4：Hook Bridge 与 Agent 连接
 
