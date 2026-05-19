@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsPageView: View {
     @EnvironmentObject private var appModel: AppModel
+    @State private var isConfirmingClear = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -37,6 +38,24 @@ struct SettingsPageView: View {
                         .foregroundStyle(HVColor.mutedText)
                         .lineLimit(2)
                         .textSelection(.enabled)
+
+                    Button(isConfirmingClear ? "确认清除本地数据" : "清除本地数据") {
+                        if isConfirmingClear {
+                            appModel.clearLocalData()
+                            isConfirmingClear = false
+                        } else {
+                            isConfirmingClear = true
+                        }
+                    }
+                    .buttonStyle(HVSecondaryButtonStyle())
+                    .padding(.top, HVSpacing.small)
+
+                    if isConfirmingClear {
+                        Text("会删除任务历史、日历统计、小队缓存和本地设置。")
+                            .font(.system(size: 11))
+                            .foregroundStyle(HVColor.warmAccent)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
             .padding(HVSpacing.large)

@@ -166,6 +166,11 @@ brew install --cask healthyvibe
 
 当前方案：SQLite + GRDB.swift。
 
+实现记录：
+
+- Swift Package 依赖：`https://github.com/groue/GRDB.swift.git`
+- 当前解析版本：`7.10.0`
+
 本地保存：
 
 - 任务模板。

@@ -10,20 +10,42 @@ let package = Package(
     products: [
         .executable(name: "HealthyVibe", targets: ["HealthyVibe"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0")
+    ],
     targets: [
         .target(
             name: "HealthyVibeCore",
             path: "Sources/HealthyVibeCore"
         ),
+        .target(
+            name: "HealthyVibeStorage",
+            dependencies: [
+                "HealthyVibeCore",
+                .product(name: "GRDB", package: "GRDB.swift")
+            ],
+            path: "Sources/HealthyVibeStorage"
+        ),
         .executableTarget(
             name: "HealthyVibe",
-            dependencies: ["HealthyVibeCore"],
+            dependencies: [
+                "HealthyVibeCore",
+                "HealthyVibeStorage"
+            ],
             path: "Sources/HealthyVibe"
         ),
         .testTarget(
             name: "HealthyVibeCoreTests",
             dependencies: ["HealthyVibeCore"],
             path: "Tests/HealthyVibeCoreTests"
+        ),
+        .testTarget(
+            name: "HealthyVibeStorageTests",
+            dependencies: [
+                "HealthyVibeCore",
+                "HealthyVibeStorage"
+            ],
+            path: "Tests/HealthyVibeStorageTests"
         )
     ]
 )

@@ -47,6 +47,24 @@ make bundle
 
 Phase 1 的任务引擎目前只保存内存状态，Phase 2 会把每日任务池、完成记录和日历统计接入 SQLite。
 
+## Phase 2 验证
+
+已验证：
+
+```bash
+swift test
+make bundle
+open -n .build/HealthyVibe.app
+```
+
+当前 SQLite 位置：
+
+```text
+~/Library/Application Support/HealthyVibe/HealthyVibe.sqlite
+```
+
+GRDB 当前解析版本记录在 `Package.resolved`：`7.10.0`。
+
 ## 当前架构
 
 ```text
@@ -58,8 +76,13 @@ Sources/HealthyVibe/
   Views/            Popover 三页视图
 Sources/HealthyVibeCore/
   TaskEngine        本地任务池、随机下发、完成状态
+  HistoryModels     日历摘要和历史总览模型
+Sources/HealthyVibeStorage/
+  AppDatabase       GRDB migrations、任务状态持久化、日历统计
 Tests/HealthyVibeCoreTests/
   TaskEngineTests   Phase 1 核心规则测试
+Tests/HealthyVibeStorageTests/
+  AppDatabaseTests  Phase 2 持久化规则测试
 Resources/
   Info.plist        app bundle 元信息，包含 LSUIElement
 Scripts/

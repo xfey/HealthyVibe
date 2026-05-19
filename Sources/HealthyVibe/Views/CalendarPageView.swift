@@ -23,15 +23,20 @@ struct CalendarPageView: View {
             calendarGrid
 
             VStack(alignment: .leading, spacing: HVSpacing.small) {
-                metricRow(title: "今日", value: "\(appModel.todayTaskState.totalLongevityMinutes) 分钟")
-                metricRow(title: "连续", value: appModel.todayTaskState.completedTaskCount > 0 ? "1 天" : "0 天")
-                metricRow(title: "累计", value: LongevityCopy.totalLine(forTotalMinutes: appModel.todayTaskState.totalLongevityMinutes))
+                metricRow(title: "今日", value: "\(appModel.historyOverview.todayMinutes) 分钟")
+                metricRow(title: "连续", value: "\(appModel.historyOverview.currentStreakDays) 天")
+                metricRow(title: "累计", value: LongevityCopy.totalLine(forTotalMinutes: appModel.historyOverview.totalLongevityMinutes))
             }
             .padding(.top, HVSpacing.small)
+
+            selectedDayDetail
 
             Spacer(minLength: 0)
         }
         .padding(HVSpacing.large)
+        .onAppear {
+            appModel.refreshForCurrentDay()
+        }
     }
 
     private var monthTitle: String {
@@ -53,8 +58,21 @@ struct CalendarPageView: View {
             }
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 7) {
-                ForEach(monthCells, id: \.self) { day in
-                    CalendarDayCell(day: day, isToday: day == currentDay)
+                ForEach(Array(monthCells.enumerated()), id: \.offset) { _, day in
+                    if let day {
+                        let dateKey = dateKey(forDay: day)
+                        CalendarDayCell(
+                            day: day,
+                            isToday: day == currentDay,
+                            isSelected: appModel.selectedHistoryDateKey == dateKey,
+                            summary: appModel.historySummary(for: dateKey)
+                        ) {
+                            appModel.selectedHistoryDateKey = dateKey
+                        }
+                    } else {
+                        Color.clear
+                            .frame(height: 24)
+                    }
                 }
             }
         }
@@ -84,6 +102,29 @@ struct CalendarPageView: View {
         calendar.component(.day, from: referenceDate)
     }
 
+    private var selectedDayDetail: some View {
+        let dateKey = appModel.selectedHistoryDateKey ?? dateKey(forDay: currentDay)
+        let summary = appModel.historySummary(for: dateKey)
+
+        return VStack(alignment: .leading, spacing: HVSpacing.xsmall) {
+            Text(dayTitle(for: dateKey))
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(HVColor.primaryText)
+            Text("延寿 \(summary?.longevityMinutes ?? 0) 分钟 · 完成 \(summary?.completedTaskCount ?? 0) 次任务")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(HVColor.secondaryText)
+        }
+        .padding(.horizontal, HVSpacing.medium)
+        .padding(.vertical, HVSpacing.small)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(HVColor.surface)
+        .clipShape(RoundedRectangle(cornerRadius: HVRadius.medium, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: HVRadius.medium, style: .continuous)
+                .stroke(HVColor.border, lineWidth: 1)
+        )
+    }
+
     private func metricRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
@@ -96,23 +137,66 @@ struct CalendarPageView: View {
             Spacer(minLength: 0)
         }
     }
+
+    private func dateKey(forDay day: Int) -> String {
+        let components = calendar.dateComponents([.year, .month], from: referenceDate)
+        let year = components.year ?? 1970
+        let month = components.month ?? 1
+        return String(format: "%04d-%02d-%02d", year, month, day)
+    }
+
+    private func dayTitle(for dateKey: String) -> String {
+        let parts = dateKey.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else {
+            return dateKey
+        }
+
+        return "\(parts[1]) 月 \(parts[2]) 日"
+    }
 }
 
 private struct CalendarDayCell: View {
-    let day: Int?
+    let day: Int
     let isToday: Bool
+    let isSelected: Bool
+    let summary: DailyHistorySummary?
+    let action: () -> Void
 
     var body: some View {
-        ZStack {
-            if let day {
+        Button(action: action) {
+            ZStack {
                 RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous)
-                    .fill(isToday ? HVColor.accentFill : Color.clear)
+                    .fill(backgroundColor)
 
                 Text("\(day)")
                     .font(.system(size: 12, weight: isToday ? .semibold : .regular))
                     .foregroundStyle(isToday ? HVColor.primaryText : HVColor.secondaryText)
+
+                if summary?.hasRecord == true {
+                    Circle()
+                        .fill(summary?.reachedGoal == true ? HVColor.calmAccent : HVColor.warmAccent.opacity(0.65))
+                        .frame(width: 4, height: 4)
+                        .offset(y: 8)
+                }
             }
         }
+        .buttonStyle(.plain)
         .frame(height: 24)
+        .overlay(
+            RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous)
+                .stroke(isSelected ? HVColor.warmAccent : Color.clear, lineWidth: 1)
+        )
+    }
+
+    private var backgroundColor: Color {
+        if isSelected {
+            return HVColor.accentFill.opacity(0.85)
+        }
+
+        if isToday {
+            return HVColor.accentFill
+        }
+
+        return Color.clear
     }
 }

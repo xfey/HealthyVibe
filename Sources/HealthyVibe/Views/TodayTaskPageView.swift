@@ -20,6 +20,9 @@ struct TodayTaskPageView: View {
             Spacer(minLength: 0)
         }
         .padding(HVSpacing.large)
+        .onAppear {
+            appModel.refreshForCurrentDay()
+        }
     }
 
     @ViewBuilder

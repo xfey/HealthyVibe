@@ -93,37 +93,49 @@
 
 ## Phase 2：SQLite 本地持久化与日历
 
+状态：已完成。
+
 目标：让个人历史成为本地主账本。
 
 任务：
 
-- 接入 SQLite + GRDB.swift。
-- 建表：
-  - `task_templates`
-  - `daily_task_plan`
-  - `task_deliveries`
-  - `task_completions`
-  - `daily_stats`
-  - `hook_events`
-  - `team_profile`
-  - `team_snapshots_cache`
-  - `app_settings`
-- 持久化每日任务池和完成次数。
-- 持久化每次任务下发和完成记录。
-- 持久化每日统计。
-- 实现日历页：
-  - 当月日历。
-  - 有记录 / 达标状态。
-  - 今日、连续、累计。
-  - 点击某天展示延寿分钟和完成次数。
-- 实现清除本地数据。
+- [x] 接入 SQLite + GRDB.swift。
+- [x] 建表：
+  - [x] `task_templates`
+  - [x] `daily_task_plan`
+  - [x] `task_deliveries`
+  - [x] `task_completions`
+  - [x] `daily_stats`
+  - [x] `hook_events`
+  - [x] `team_profile`
+  - [x] `team_snapshots_cache`
+  - [x] `app_settings`
+- [x] 持久化每日任务池和完成次数。
+- [x] 持久化每次任务下发和完成记录。
+- [x] 持久化每日统计。
+- [x] 实现日历页：
+  - [x] 当月日历。
+  - [x] 有记录 / 达标状态。
+  - [x] 今日、连续、累计。
+  - [x] 点击某天展示延寿分钟和完成次数。
+- [x] 实现清除本地数据。
 
 验收：
 
-- 关闭再打开 app，今日任务和进度不丢。
-- 跨日期后自动生成新任务池。
-- 日历可以显示历史完成情况。
-- 清除本地数据后恢复初始状态。
+- [x] 关闭再打开 app，今日任务和进度不丢。
+- [x] 跨日期后自动生成新任务池。
+- [x] 日历可以显示历史完成情况。
+- [x] 清除本地数据后恢复初始状态。
+
+实现记录：
+
+- 新增 `HealthyVibeStorage` target，使用 GRDB 7.10.0。
+- SQLite 文件路径为 `~/Library/Application Support/HealthyVibe/HealthyVibe.sqlite`。
+- 存储层负责 migrations、默认任务模板、每日计划、下发记录、完成记录、日报统计、月历摘要和清除数据。
+- 日历页显示当月记录点，达到 30 分钟目标时使用深色点；点击日期展示当日延寿分钟和完成次数。
+- 设置页提供二次确认式 `清除本地数据`。
+- 已通过 `swift test` 覆盖建表、跨重启恢复、跨日期新计划、月历摘要和清除数据。
+- 已验证 `make bundle` 和真实 app 启动后创建 SQLite。
 
 ## Phase 3：通知与活跃时间
 
