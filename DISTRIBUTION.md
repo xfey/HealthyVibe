@@ -68,7 +68,7 @@ make package
 生成 GitHub Release URL 版 cask：
 
 ```bash
-HEALTHYVIBE_RELEASE_URL="https://github.com/healthyvibe/HealthyVibe/releases/download/v0.1.0/HealthyVibe-0.1.0.zip" make package
+HEALTHYVIBE_RELEASE_URL="https://github.com/xfey/HealthyVibe/releases/download/v0.1.0/HealthyVibe-0.1.0.zip" make package
 ```
 
 生成的 `dist/healthyvibe.rb` 包含：
@@ -95,7 +95,7 @@ HEALTHYVIBE_SKIP_OPEN=1 \
 线上安装时可设置：
 
 ```bash
-HEALTHYVIBE_ZIP_URL="https://github.com/healthyvibe/HealthyVibe/releases/latest/download/HealthyVibe.zip" ./Scripts/install.sh
+HEALTHYVIBE_ZIP_URL="https://github.com/xfey/HealthyVibe/releases/latest/download/HealthyVibe.zip" ./Scripts/install.sh
 ```
 
 未来官网可以暴露为：

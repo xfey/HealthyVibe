@@ -27,7 +27,7 @@ cask "healthyvibe" do
   url "$URL_VALUE"
   name "HealthyVibe"
   desc "Menu bar health breaks for AI coding waits"
-  homepage "https://github.com/healthyvibe/HealthyVibe"
+  homepage "https://github.com/xfey/HealthyVibe"
 
   depends_on macos: ">= :ventura"
 

@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_NAME="HealthyVibe.app"
 INSTALL_DIR="${HEALTHYVIBE_INSTALL_DIR:-/Applications}"
-DEFAULT_URL="https://github.com/healthyvibe/HealthyVibe/releases/latest/download/HealthyVibe.zip"
+DEFAULT_URL="https://github.com/xfey/HealthyVibe/releases/latest/download/HealthyVibe.zip"
 ZIP_URL="${HEALTHYVIBE_ZIP_URL:-$DEFAULT_URL}"
 TMP_DIR="$(mktemp -d)"
 
