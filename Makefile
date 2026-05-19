@@ -1,7 +1,10 @@
-.PHONY: build bundle release-bundle package run clean
+.PHONY: build icon bundle release-bundle package run clean
 
 build:
 	swift build
+
+icon:
+	./Scripts/generate_app_icon.swift
 
 bundle:
 	./Scripts/build_app_bundle.sh debug

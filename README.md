@@ -19,6 +19,7 @@ HealthyVibe 是一个 macOS 菜单栏应用，把 Claude Code / Codex 等 AI cod
 
 ```bash
 make build
+make icon
 make bundle
 make run
 swift test

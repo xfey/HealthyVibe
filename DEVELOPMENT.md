@@ -8,6 +8,7 @@
 
 ```bash
 make build
+make icon
 make bundle
 make run
 ```
@@ -241,10 +242,12 @@ Tests/HealthyVibeTeamTests/
   TeamTests         Phase 5 小队身份和 Relay client 测试
 Resources/
   Info.plist        app bundle 元信息，包含 LSUIElement
+  HealthyVibe.icns  app icon
 README.md           项目说明和本地开发入口
 QA.md               MVP 发布前 QA 清单
 Scripts/
   build_app_bundle.sh
+  generate_app_icon.swift
   package_release.sh
   generate_homebrew_cask.sh
   install.sh
