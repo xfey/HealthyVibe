@@ -13,28 +13,39 @@
 
 ## Phase 0：项目脚手架与设计约束
 
+状态：已完成。
+
 目标：建立可持续开发的 macOS 项目骨架。
 
 任务：
 
-- 创建 SwiftUI + AppKit macOS 项目。
-- 最低系统版本设为 macOS 13 Ventura+。
-- 接入 `NSStatusItem + NSPopover`。
-- 建立基础 Design System：颜色、间距、按钮、进度条、卡片、分页。
-- 建立三页 popover 骨架：今日任务、日历、设置。
-- 引入 GRDB.swift 或先预留数据库层接口。
-- 建立本地目录结构：
-  - `~/Library/Application Support/HealthyVibe/`
-  - `events/`
-  - `hooks/`
-- 配置基本日志和错误展示。
+- [x] 创建 SwiftUI + AppKit macOS 项目。
+- [x] 最低系统版本设为 macOS 13 Ventura+。
+- [x] 接入 `NSStatusItem + NSPopover`。
+- [x] 建立基础 Design System：颜色、间距、按钮、进度条、卡片、分页。
+- [x] 建立三页 popover 骨架：今日任务、日历、设置。
+- [x] 引入 GRDB.swift 或先预留数据库层接口。
+- [x] 建立本地目录结构：
+  - [x] `~/Library/Application Support/HealthyVibe/`
+  - [x] `events/`
+  - [x] `hooks/`
+- [x] 配置基本日志和错误展示。
 
 验收：
 
-- App 启动后只出现在菜单栏。
-- 点击菜单栏图标打开 340px 左右的小 popover。
-- 三个页面可以切换。
-- 页面白底、温暖、干净，无复杂 dashboard。
+- [x] App 启动后只出现在菜单栏。
+- [x] 点击菜单栏图标打开 340px 左右的小 popover。
+- [x] 三个页面可以切换。
+- [x] 页面白底、温暖、干净，无复杂 dashboard。
+
+实现记录：
+
+- 使用 Swift Package Manager 管理源码，并通过 `Scripts/build_app_bundle.sh` 生成 `.app`。
+- `Resources/Info.plist` 设置 `LSUIElement=true` 和 `LSMinimumSystemVersion=13.0`。
+- `MenuBarController` 使用 `NSStatusItem + NSPopover + NSHostingController`。
+- `AppPaths` 在启动时创建 Application Support、`events/` 和 `hooks/`。
+- 数据库层暂以 `DatabaseService` 协议和 `PlaceholderDatabaseService` 预留，Phase 2 接入 GRDB。
+- 已验证 `swift build`、`make bundle` 和 `.app` 启动目录创建。
 
 ## Phase 1：本地任务引擎
 
