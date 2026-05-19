@@ -26,11 +26,16 @@ let package = Package(
             ],
             path: "Sources/HealthyVibeStorage"
         ),
+        .target(
+            name: "HealthyVibeAgents",
+            path: "Sources/HealthyVibeAgents"
+        ),
         .executableTarget(
             name: "HealthyVibe",
             dependencies: [
                 "HealthyVibeCore",
-                "HealthyVibeStorage"
+                "HealthyVibeStorage",
+                "HealthyVibeAgents"
             ],
             path: "Sources/HealthyVibe"
         ),
@@ -46,6 +51,11 @@ let package = Package(
                 "HealthyVibeStorage"
             ],
             path: "Tests/HealthyVibeStorageTests"
+        ),
+        .testTarget(
+            name: "HealthyVibeAgentsTests",
+            dependencies: ["HealthyVibeAgents"],
+            path: "Tests/HealthyVibeAgentsTests"
         )
     ]
 )

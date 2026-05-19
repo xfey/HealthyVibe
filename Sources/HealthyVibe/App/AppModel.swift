@@ -1,4 +1,5 @@
 import Foundation
+import HealthyVibeAgents
 import HealthyVibeCore
 import HealthyVibeStorage
 
@@ -12,6 +13,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var historyOverview: HistoryOverview
     @Published private(set) var notificationPermissionState: NotificationPermissionState = .unknown
     @Published private(set) var lastReminderMessage: String?
+    @Published private(set) var agentConnectionStatuses: [AgentKind: AgentConnectionStatus] = [:]
     @Published var selectedHistoryDateKey: String?
 
     let paths: AppPaths
@@ -19,6 +21,8 @@ final class AppModel: ObservableObject {
     private var database: AppDatabase?
     private var notificationService: NotificationService?
     private var activeTimeTracker: ActiveTimeTracker?
+    private var hookBridgeManager: HookBridgeManager?
+    private var hookEventPollTimer: Timer?
     private var lastReminderAt: Date?
     private let reminderCooldown: TimeInterval = 30 * 60
 
@@ -37,10 +41,20 @@ final class AppModel: ObservableObject {
             try paths.ensureCreated()
             let database = try AppDatabase(path: paths.databaseURL.path)
             self.database = database
+            let hookBridgeManager = HookBridgeManager(
+                applicationSupportDirectory: paths.applicationSupportDirectory,
+                eventsDirectory: paths.eventsDirectory,
+                hooksDirectory: paths.hooksDirectory
+            )
+            try hookBridgeManager.installBridgeScript()
+            self.hookBridgeManager = hookBridgeManager
+            agentConnectionStatuses = hookBridgeManager.statuses()
             todayTaskState = try database.loadTodayState()
             lastReminderAt = try database.loadLastReminderDate()
             selectedHistoryDateKey = todayTaskState.dateKey
             try reloadHistory()
+            try processPendingHookEvents()
+            startHookEventPolling()
             setupStatus = .ready
             lastErrorMessage = nil
             AppLog.app.info("HealthyVibe bootstrapped successfully.")
@@ -172,6 +186,41 @@ final class AppModel: ObservableObject {
         handlePromptSubmitted(source: "debug", now: Date())
     }
 
+    func connectAgent(_ agent: AgentKind) {
+        do {
+            try hookBridgeManager?.connect(agent)
+            refreshAgentStatuses()
+            lastErrorMessage = nil
+        } catch {
+            recordError("连接 \(agent.displayName) 失败：\(error.localizedDescription)")
+        }
+    }
+
+    func disconnectAgent(_ agent: AgentKind) {
+        do {
+            try hookBridgeManager?.disconnect(agent)
+            refreshAgentStatuses()
+            lastErrorMessage = nil
+        } catch {
+            recordError("断开 \(agent.displayName) 失败：\(error.localizedDescription)")
+        }
+    }
+
+    func testAgentHook(_ agent: AgentKind) {
+        do {
+            try hookBridgeManager?.sendTestEvent(for: agent)
+            try processPendingHookEvents()
+            refreshAgentStatuses()
+            lastErrorMessage = nil
+        } catch {
+            recordError("测试 \(agent.displayName) hook 失败：\(error.localizedDescription)")
+        }
+    }
+
+    func status(for agent: AgentKind) -> AgentConnectionStatus {
+        agentConnectionStatuses[agent] ?? .notConnected
+    }
+
     func historySummary(for dateKey: String) -> DailyHistorySummary? {
         monthSummaries.first { $0.dateKey == dateKey }
     }
@@ -202,6 +251,34 @@ final class AppModel: ObservableObject {
     private func recordError(_ message: String) {
         lastErrorMessage = message
         AppLog.app.error("\(message, privacy: .public)")
+    }
+
+    private func refreshAgentStatuses() {
+        agentConnectionStatuses = hookBridgeManager?.statuses() ?? [:]
+    }
+
+    private func startHookEventPolling() {
+        hookEventPollTimer?.invalidate()
+        hookEventPollTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                do {
+                    try self?.processPendingHookEvents()
+                } catch {
+                    self?.recordError("读取 hook 事件失败：\(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private func processPendingHookEvents() throws {
+        guard let hookBridgeManager else {
+            return
+        }
+
+        let events = try hookBridgeManager.readPendingEvents()
+        for event in events where event.event == "prompt_submitted" {
+            handlePromptSubmitted(source: event.source, now: event.receivedAt)
+        }
     }
 
     private func handlePromptSubmitted(source: String, now: Date) {

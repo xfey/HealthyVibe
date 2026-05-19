@@ -73,6 +73,8 @@
 实现注意：
 
 - `UserPromptSubmit` 可能包含用户 prompt。HealthyVibe hook bridge 必须读取后丢弃，不保存、不上传、不输出。
+- Claude Code `UserPromptSubmit` 会在 input 中提供 `prompt` 字段；hook 返回 stdout 可能影响上下文，因此 HealthyVibe bridge 不输出任何内容。
+- 用户级配置路径为 `~/.claude/settings.json`，配置形态为 `hooks.UserPromptSubmit[].hooks[]`。
 - 写入配置前必须备份。
 - 断开连接时只删除 HealthyVibe 自己写入的 hook，不影响用户已有 hook。
 
@@ -92,6 +94,8 @@
 实现注意：
 
 - Codex hooks 当前更适合调用本地 command/script。
+- Codex `UserPromptSubmit` 会在 input 中提供 `prompt` 字段；hook 返回 stdout 可能加入上下文，因此 HealthyVibe bridge 不输出任何内容。
+- 用户级 hook 配置使用 `~/.codex/hooks.json`，配置形态为 `hooks.UserPromptSubmit[].hooks[]`。
 - Hook bridge 要快速退出，避免影响 agent 开始工作。
 - MVP 不读取命令内容、文件路径、diff、prompt 等敏感信息。
 

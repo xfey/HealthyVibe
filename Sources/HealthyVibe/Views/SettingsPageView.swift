@@ -1,4 +1,5 @@
 import SwiftUI
+import HealthyVibeAgents
 
 struct SettingsPageView: View {
     @EnvironmentObject private var appModel: AppModel
@@ -8,8 +9,11 @@ struct SettingsPageView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: HVSpacing.large) {
                 settingsSection("Agents") {
-                    settingsRow(title: "Claude Code", value: "Phase 4")
-                    settingsRow(title: "Codex", value: "Phase 4")
+                    agentRow(.claude)
+                    Divider()
+                        .overlay(HVColor.border)
+                        .padding(.vertical, HVSpacing.xsmall)
+                    agentRow(.codex)
                 }
 
                 settingsSection("Notifications") {
@@ -133,5 +137,52 @@ struct SettingsPageView: View {
                 .lineLimit(1)
         }
         .frame(height: 24)
+    }
+
+    private func agentRow(_ agent: AgentKind) -> some View {
+        VStack(alignment: .leading, spacing: HVSpacing.small) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(agent.displayName)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(HVColor.primaryText)
+                Spacer(minLength: HVSpacing.medium)
+                Text(appModel.status(for: agent).displayText)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(agentStatusColor(agent))
+                    .lineLimit(1)
+            }
+
+            HStack(spacing: HVSpacing.small) {
+                Button(appModel.status(for: agent) == .connected ? "Disconnect" : "Connect") {
+                    if appModel.status(for: agent) == .connected {
+                        appModel.disconnectAgent(agent)
+                    } else {
+                        appModel.connectAgent(agent)
+                    }
+                }
+                .buttonStyle(HVSecondaryButtonStyle())
+
+                Button("Test") {
+                    appModel.testAgentHook(agent)
+                }
+                .buttonStyle(HVSecondaryButtonStyle())
+            }
+
+            Text(agent.configDescription)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(HVColor.mutedText)
+                .lineLimit(1)
+        }
+    }
+
+    private func agentStatusColor(_ agent: AgentKind) -> Color {
+        switch appModel.status(for: agent) {
+        case .connected:
+            HVColor.calmAccent
+        case .invalidConfig:
+            HVColor.warmAccent
+        case .notConnected, .configMissing:
+            HVColor.secondaryText
+        }
     }
 }

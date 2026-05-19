@@ -177,41 +177,54 @@
 
 ## Phase 4：Hook Bridge 与 Agent 连接
 
+状态：已完成。
+
 目标：接入 Claude Code / Codex 的真实 `UserPromptSubmit`。
 
 任务：
 
-- 生成隐藏 hook bridge：
-  - `~/Library/Application Support/HealthyVibe/hooks/agent-event.sh`
-- 实现 event inbox：
-  - `~/Library/Application Support/HealthyVibe/events/*.json`
-- Hook bridge 只写入最小事件：
-  - source。
-  - event。
-  - receivedAt。
-- Hook bridge 丢弃 prompt payload，不保存、不上传、不输出。
-- 设置页支持 Claude Code：
-  - Connect。
-  - Disconnect。
-  - Test。
-  - 状态检测。
-- 设置页支持 Codex：
-  - Connect。
-  - Disconnect。
-  - Test。
-  - 状态检测。
-- 写入配置前备份原配置。
-- 合并 HealthyVibe hook，不覆盖用户已有 hook。
-- 断开时只删除 HealthyVibe 自己写入的 hook。
+- [x] 生成隐藏 hook bridge：
+  - [x] `~/Library/Application Support/HealthyVibe/hooks/agent-event.sh`
+- [x] 实现 event inbox：
+  - [x] `~/Library/Application Support/HealthyVibe/events/*.json`
+- [x] Hook bridge 只写入最小事件：
+  - [x] source。
+  - [x] event。
+  - [x] receivedAt。
+- [x] Hook bridge 丢弃 prompt payload，不保存、不上传、不输出。
+- [x] 设置页支持 Claude Code：
+  - [x] Connect。
+  - [x] Disconnect。
+  - [x] Test。
+  - [x] 状态检测。
+- [x] 设置页支持 Codex：
+  - [x] Connect。
+  - [x] Disconnect。
+  - [x] Test。
+  - [x] 状态检测。
+- [x] 写入配置前备份原配置。
+- [x] 合并 HealthyVibe hook，不覆盖用户已有 hook。
+- [x] 断开时只删除 HealthyVibe 自己写入的 hook。
 
 验收：
 
-- Claude Code 提交 prompt 后能写入 event inbox。
-- Codex 提交 prompt 后能写入 event inbox。
-- App 未运行时，hook bridge 能写入事件并尝试启动 app。
-- App 启动后能处理积压事件。
-- 用户已有 hook 不被覆盖。
-- 断开连接后用户配置恢复到没有 HealthyVibe hook 的状态。
+- [x] Claude Code 提交 prompt 后能写入 event inbox。
+- [x] Codex 提交 prompt 后能写入 event inbox。
+- [x] App 未运行时，hook bridge 能写入事件并尝试启动 app。
+- [x] App 启动后能处理积压事件。
+- [x] 用户已有 hook 不被覆盖。
+- [x] 断开连接后用户配置恢复到没有 HealthyVibe hook 的状态。
+
+实现记录：
+
+- 新增 `HealthyVibeAgents` target，负责 hook bridge、event inbox、Claude/Codex 配置合并和状态检测。
+- Claude Code 写入用户级 `~/.claude/settings.json` 的 `hooks.UserPromptSubmit`。
+- Codex 写入用户级 `~/.codex/hooks.json` 的 `hooks.UserPromptSubmit`。
+- Hook command 使用 shell form 调用本地 `agent-event.sh`，兼容 Claude/Codex 当前 command hook 格式。
+- `agent-event.sh` 会读取 stdin 后立即丢弃，只写入 `source`、`event`、`receivedAt`，并尝试 `open -gj -a HealthyVibe`。
+- App 启动时和运行期间轮询 `events/*.json`，处理后删除，解析失败改名为 `.failed`。
+- 已通过 `swift test` 覆盖配置合并、备份、断开、无效 JSON 保护、bridge 写入最小事件和 prompt 丢弃。
+- 已验证 `make bundle`，真实 app 启动后会生成可执行 bridge script。
 
 ## Phase 5：小队 Relay
 

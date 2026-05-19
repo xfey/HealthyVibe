@@ -82,6 +82,32 @@ open -n .build/HealthyVibe.app
 - `ActiveTimeAccumulator`：纯逻辑计时器，已单测覆盖。
 - 设置页提供 `模拟 prompt_submitted` debug action。
 
+## Phase 4 验证
+
+已验证：
+
+```bash
+swift test
+make bundle
+open -n .build/HealthyVibe.app
+```
+
+当前 hook bridge：
+
+```text
+~/Library/Application Support/HealthyVibe/hooks/agent-event.sh
+~/Library/Application Support/HealthyVibe/events/*.json
+```
+
+Agent 配置路径：
+
+```text
+Claude Code: ~/.claude/settings.json
+Codex:      ~/.codex/hooks.json
+```
+
+`agent-event.sh` 会丢弃 stdin，仅写入 `source`、`event`、`receivedAt`。
+
 ## 当前架构
 
 ```text
@@ -96,6 +122,8 @@ Sources/HealthyVibeCore/
   ActiveTime        活跃时间累计规则
   TaskEngine        本地任务池、随机下发、完成状态
   HistoryModels     日历摘要和历史总览模型
+Sources/HealthyVibeAgents/
+  HookBridge        bridge script、event inbox、Agent 配置合并
 Sources/HealthyVibeStorage/
   AppDatabase       GRDB migrations、任务状态持久化、日历统计
 Tests/HealthyVibeCoreTests/
@@ -103,6 +131,8 @@ Tests/HealthyVibeCoreTests/
   ActiveTimeTests   Phase 3 活跃时间规则测试
 Tests/HealthyVibeStorageTests/
   AppDatabaseTests  Phase 2 持久化规则测试
+Tests/HealthyVibeAgentsTests/
+  HookBridgeTests   Phase 4 hook bridge 和配置合并测试
 Resources/
   Info.plist        app bundle 元信息，包含 LSUIElement
 Scripts/
