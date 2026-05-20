@@ -41,6 +41,11 @@ brew install --cask xfey/tap/healthyvibe
 brew update && brew upgrade --cask healthyvibe
 ```
 
+如果弹出通知说明“拒绝终端修改您的APP”，请点击允许，因为我们通过终端进行更新应用。如果拒绝，您也可以在如下链接手动下载 APP 然后重新安装：
+
+[Release](https://github.com/xfey/HealthyVibe/releases)
+
+
 ## 怎么用
 
 第一次打开后，点击菜单栏里的 HealthyVibe 图标。
