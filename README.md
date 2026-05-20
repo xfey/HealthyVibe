@@ -1,10 +1,12 @@
 # HealthyVibe / Vibe延寿指南
 
-HealthyVibe 是一款给 AI 时代程序员准备的 macOS 菜单栏健康提醒工具。
+HealthyVibe 是一款给 AI 时代程序员准备的 macOS 菜单栏小工具。
 
-当你把 prompt 交给 Claude Code / Codex，等待 AI 写代码的时候，HealthyVibe 会轻轻提醒你：起来喝口水、远眺一下、活动肩颈、动动手腕。让 AI 干活的时候，碳基生物也顺手续一会儿命。
+当你把 prompt 交给 Claude Code 或 Codex，等 AI 写代码的时候，HealthyVibe 会提醒你做一点很短的健康任务：喝口水、远眺一下、起身活动、动动肩颈或手腕。
 
-这不是医学建议，只是一个温柔的小工具：让 AI 多写一点代码，让我们多活一点生活。
+AI 在工作，碳基生物也可以顺手续一会儿命。
+
+这不是医学建议，只是一个轻量、温和的小提醒：让 AI 多写一点代码，让我们多活一点生活。
 
 ## 安装
 
@@ -12,112 +14,103 @@ HealthyVibe 是一款给 AI 时代程序员准备的 macOS 菜单栏健康提醒
 brew install --cask xfey/tap/healthyvibe
 ```
 
-或者：
+如果你更喜欢先添加 tap：
 
 ```bash
 brew tap xfey/tap
 brew install --cask healthyvibe
 ```
 
-安装后启动 `HealthyVibe.app`，它只会出现在菜单栏里。后续连接 Claude Code / Codex、通知权限、小队等配置都在菜单栏小窗口里完成。
+安装完成后，打开 `HealthyVibe.app`。它不会弹出一个大窗口，只会出现在 macOS 菜单栏里。
 
-## 它会做什么
+## 怎么用
 
-- 在 Claude Code / Codex 收到你的 prompt 后提醒你休息一下。
-- 使用系统通知，不做突兀的自定义弹窗。
-- 通知里可以直接选择 `已完成`、`30分钟后提醒`、`两小时后提醒`。
-- 健康任务包括喝水、远眺、起身活动、肩颈活动、手腕活动和深呼吸。
-- 每天有 30 分钟“延寿”目标，完成任务会填充进度条。
-- 日历页记录过去每天的延寿分钟和完成情况。
-- 小队页可以创建 / 加入 6 位码小队，看看今天谁最会续命。
-- 支持 Homebrew / CLI 风格安装，但日常使用保持 GUI。
+第一次打开后，点击菜单栏里的 HealthyVibe 图标。
+
+在设置页里连接你正在使用的 agent：
+
+- Claude Code
+- Codex
+
+连接后，重启对应的 agent 会话。之后每当你提交 prompt，HealthyVibe 就会通过系统通知提醒你做一个小任务。
+
+通知里可以直接选择：
+
+- `已完成`
+- `30分钟后提醒`
+- `两小时后提醒`
+
+如果你没有点完成，下次提交 prompt 时它还会继续提醒。只有完成任务后，才会进入 30 分钟冷却。
+
+## 今日任务
+
+HealthyVibe 每天会准备一组固定的小任务，例如：
+
+- 喝一杯水
+- 远眺 20 秒
+- 起身活动 30 秒
+- 活动肩颈
+- 活动手腕
+- 深呼吸几次
+
+每次完成任务都会获得一点“延寿分钟”。这是应用里的娱乐积分，用来给短暂休息一点正反馈。
+
+今日目标是 30 分钟。你不需要一次做完所有任务，HealthyVibe 会在合适的时候慢慢提醒。
+
+## 日历
+
+日历页会记录你每天完成了多少延寿分钟。
+
+累计时间旁边会出现一些更有生活感的小描述，帮你直观感受这些零碎休息加起来可以换来什么。
 
 ## 小队
 
 小队不需要账号。
 
-点击 `创建` 会自动生成一个 6 位邀请码。把这个号码发给朋友，朋友在小队页输入同一个 6 位码并点击 `加入`，就会进入同一个当天排行榜。
+点击 `创建` 会得到一个 6 位邀请码。把这个号码发给朋友，朋友在小队页输入同一个 6 位码并点击 `加入`，就会进入同一个当天排行榜。
 
-Relay 只保存小队 hash、匿名 member hash、日期、延寿分钟、完成次数和更新时间。个人长期历史仍保存在本地 SQLite。
+排行榜只比较今天的延寿分钟。它不需要复杂数据，也不需要认真竞争，能让大家互相提醒一下就够了。
 
-## 隐私边界
+## 隐私
 
-HealthyVibe 的 hook bridge 会丢弃输入内容，只写入最小事件：
+HealthyVibe 只关心一件事：你是不是刚刚把 prompt 交给了 agent。
 
-```json
-{
-  "source": "codex 或 claude",
-  "event": "prompt_submitted",
-  "receivedAt": "时间戳"
-}
+它不会保存你的 prompt、代码、diff、文件路径或命令内容，也不会上传这些内容。
+
+小队功能只用于生成当天排行榜，不需要账号。你的个人历史记录保存在本机。
+
+## 卸载
+
+```bash
+brew uninstall --cask healthyvibe
 ```
 
-它不会保存 prompt、代码、diff、路径、命令内容，也不会把这些内容上传到 relay。
+如果你想同时清理本地数据：
 
-小队功能只上传匿名 hash、日期、延寿分钟和完成任务次数，用于生成当天排行榜。
+```bash
+brew uninstall --cask --zap healthyvibe
+```
 
-## 本地开发
+## 自己编译或修改
+
+如果你需要自己编译、修改代码并进行部署，可以查看：
+
+- `DEVELOPMENT.md`：本地开发、项目结构和调试说明
+- `DISTRIBUTION.md`：签名、公证、打包和 Homebrew Cask 发布流程
+- `relay/`：小队排行榜服务的接口说明和参考实现
+
+常用命令：
 
 ```bash
 make build
 make bundle
-make run
 swift test
-```
-
-生成的 app：
-
-```text
-.build/HealthyVibe.app
-```
-
-本地数据：
-
-```text
-~/Library/Application Support/HealthyVibe/
-```
-
-## 打包
-
-```bash
 make package
-```
-
-输出：
-
-```text
-dist/HealthyVibe-1.0.0.zip
-dist/HealthyVibe-1.0.0.zip.sha256
-dist/healthyvibe.rb
-```
-
-签名、公证和 Homebrew Cask 说明见 `DISTRIBUTION.md`。
-
-## Relay
-
-生产 Relay 地址：
-
-```text
-https://healthyvibe.owlib.ai
-```
-
-健康检查：
-
-```text
-https://healthyvibe.owlib.ai/healthz
-```
-
-Relay 参考实现与接口文档位于 `relay/`：
-
-```bash
-cd relay
-npm run typecheck
-npm test
 ```
 
 ## 致谢
 
-HealthyVibe 的「延寿」表达和部分健康任务灵感来自 [程序员延寿指南](https://github.com/geekan/HowToLiveLonger)。
+HealthyVibe 的“延寿”表达和部分健康任务灵感来自 [程序员延寿指南](https://github.com/geekan/HowToLiveLonger)。
 
 也感谢那些愿意把等待 AI 的几十秒，换成喝水、远眺和起身活动的人。
 
