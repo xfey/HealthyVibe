@@ -7,33 +7,29 @@ struct CalendarPageView: View {
     private let referenceDate = Date()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: HVSpacing.large) {
-            HStack {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(alignment: .firstTextBaseline) {
                 Text(monthTitle)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
                     .foregroundStyle(HVColor.primaryText)
 
                 Spacer()
-
-                Text("本地历史")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(HVColor.secondaryText)
             }
+
+            Text(LongevityCopy.totalLine(forTotalMinutes: appModel.historyOverview.totalLongevityMinutes))
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(HVColor.secondaryText)
+                .lineLimit(2)
+                .minimumScaleFactor(0.86)
+                .fixedSize(horizontal: false, vertical: true)
 
             calendarGrid
 
-            VStack(alignment: .leading, spacing: HVSpacing.small) {
-                metricRow(title: "今日", value: "\(appModel.historyOverview.todayMinutes) 分钟")
-                metricRow(title: "连续", value: "\(appModel.historyOverview.currentStreakDays) 天")
-                metricRow(title: "累计", value: LongevityCopy.totalLine(forTotalMinutes: appModel.historyOverview.totalLongevityMinutes))
-            }
-            .padding(.top, HVSpacing.small)
-
-            selectedDayDetail
-
             Spacer(minLength: 0)
         }
-        .padding(HVSpacing.large)
+        .padding(.horizontal, 18)
+        .padding(.top, 10)
+        .padding(.bottom, 2)
         .onAppear {
             appModel.refreshForCurrentDay()
         }
@@ -47,17 +43,17 @@ struct CalendarPageView: View {
     }
 
     private var calendarGrid: some View {
-        VStack(spacing: HVSpacing.small) {
+        VStack(spacing: 3) {
             HStack {
                 ForEach(["一", "二", "三", "四", "五", "六", "日"], id: \.self) { weekday in
                     Text(weekday)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 8, weight: .medium))
                         .foregroundStyle(HVColor.mutedText)
                         .frame(maxWidth: .infinity)
                 }
             }
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 7) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 7), spacing: 2) {
                 ForEach(Array(monthCells.enumerated()), id: \.offset) { _, day in
                     if let day {
                         let dateKey = dateKey(forDay: day)
@@ -71,7 +67,7 @@ struct CalendarPageView: View {
                         }
                     } else {
                         Color.clear
-                            .frame(height: 24)
+                            .frame(height: 13)
                     }
                 }
             }
@@ -102,45 +98,6 @@ struct CalendarPageView: View {
         calendar.component(.day, from: referenceDate)
     }
 
-    private var selectedDayDetail: some View {
-        let dateKey = appModel.selectedHistoryDateKey ?? dateKey(forDay: currentDay)
-        let summary = appModel.historySummary(for: dateKey)
-
-        return VStack(alignment: .leading, spacing: HVSpacing.xsmall) {
-            Text(dayTitle(for: dateKey))
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(HVColor.primaryText)
-            Text("延寿 \(summary?.longevityMinutes ?? 0) 分钟 · 完成 \(summary?.completedTaskCount ?? 0) 次任务")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(HVColor.secondaryText)
-        }
-        .padding(.horizontal, HVSpacing.medium)
-        .padding(.vertical, HVSpacing.small)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(HVColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: HVRadius.medium, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: HVRadius.medium, style: .continuous)
-                .stroke(HVColor.border, lineWidth: 1)
-        )
-    }
-
-    private func metricRow(title: String, value: String) -> some View {
-        HStack {
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(HVColor.secondaryText)
-                .frame(width: 36, alignment: .leading)
-            Text(value)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(HVColor.primaryText)
-                .lineLimit(2)
-                .minimumScaleFactor(0.9)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-    }
-
     private func dateKey(forDay day: Int) -> String {
         let components = calendar.dateComponents([.year, .month], from: referenceDate)
         let year = components.year ?? 1970
@@ -148,14 +105,6 @@ struct CalendarPageView: View {
         return String(format: "%04d-%02d-%02d", year, month, day)
     }
 
-    private func dayTitle(for dateKey: String) -> String {
-        let parts = dateKey.split(separator: "-").compactMap { Int($0) }
-        guard parts.count == 3 else {
-            return dateKey
-        }
-
-        return "\(parts[1]) 月 \(parts[2]) 日"
-    }
 }
 
 private struct CalendarDayCell: View {
@@ -172,21 +121,21 @@ private struct CalendarDayCell: View {
                     .fill(backgroundColor)
 
                 Text("\(day)")
-                    .font(.system(size: 12, weight: isToday ? .semibold : .regular))
+                    .font(.system(size: 9, weight: isToday ? .bold : .medium, design: .monospaced))
                     .foregroundStyle(isToday ? HVColor.primaryText : HVColor.secondaryText)
 
                 if summary?.hasRecord == true {
-                    Circle()
+                    Rectangle()
                         .fill(summary?.reachedGoal == true ? HVColor.calmAccent : HVColor.warmAccent.opacity(0.65))
-                        .frame(width: 4, height: 4)
-                        .offset(y: 8)
+                        .frame(width: 3, height: 3)
+                        .offset(y: 4.5)
                 }
             }
         }
         .buttonStyle(.plain)
-        .frame(height: 24)
+        .frame(height: 13)
         .overlay(
-            RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous)
+            Rectangle()
                 .stroke(isSelected ? HVColor.warmAccent : Color.clear, lineWidth: 1)
         )
     }

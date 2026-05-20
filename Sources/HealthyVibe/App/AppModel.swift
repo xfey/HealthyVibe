@@ -332,8 +332,8 @@ final class AppModel: ObservableObject {
 
     private func saveTeam(code: String) {
         let normalizedCode = TeamIdentity.normalizeTeamCode(code)
-        guard normalizedCode.replacingOccurrences(of: "-", with: "").count >= 8 else {
-            teamStatusMessage = "请输入有效的小队码。"
+        guard TeamIdentity.isValidTeamCode(normalizedCode) else {
+            teamStatusMessage = "请输入 6 位数字小队码。"
             return
         }
 

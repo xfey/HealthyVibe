@@ -33,7 +33,7 @@ public extension TaskTemplate {
             subtitle: "给缓存里的你也补点水",
             maxDailyCount: 8,
             rewardMinutes: 2,
-            rewardSuffix: "可以多听一首歌的前奏"
+            rewardSuffix: "可以剥一颗橘子"
         ),
         TaskTemplate(
             id: "look-away",
@@ -41,7 +41,7 @@ public extension TaskTemplate {
             subtitle: "让眼睛从 diff 里撤退一下",
             maxDailyCount: 6,
             rewardMinutes: 2,
-            rewardSuffix: "可以多看一页喜欢的书"
+            rewardSuffix: "可以咬一口冰西瓜"
         ),
         TaskTemplate(
             id: "stand",
@@ -49,7 +49,7 @@ public extension TaskTemplate {
             subtitle: "把身体从椅子缓存里释放出来",
             maxDailyCount: 3,
             rewardMinutes: 4,
-            rewardSuffix: "可以认真伸个懒腰"
+            rewardSuffix: "可以去楼下取个快递"
         ),
         TaskTemplate(
             id: "shoulder-neck",
@@ -57,7 +57,7 @@ public extension TaskTemplate {
             subtitle: "给脖子做一次轻量 refactor",
             maxDailyCount: 3,
             rewardMinutes: 3,
-            rewardSuffix: "可以多走到窗边看一眼"
+            rewardSuffix: "可以煎一个太阳蛋"
         ),
         TaskTemplate(
             id: "wrist",
@@ -65,7 +65,7 @@ public extension TaskTemplate {
             subtitle: "让快捷键选手先休息一下",
             maxDailyCount: 3,
             rewardMinutes: 2,
-            rewardSuffix: "可以多泡一杯热饮"
+            rewardSuffix: "可以给绿植浇点水"
         ),
         TaskTemplate(
             id: "breath",
@@ -73,7 +73,7 @@ public extension TaskTemplate {
             subtitle: "给大脑降一点风扇转速",
             maxDailyCount: 3,
             rewardMinutes: 2,
-            rewardSuffix: "可以多安静发会儿呆"
+            rewardSuffix: "可以选一首晚饭歌"
         )
     ]
 }

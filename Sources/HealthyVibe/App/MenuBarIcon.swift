@@ -8,8 +8,8 @@ enum MenuBarIcon {
             let originX = rect.midX - pixelSize * 8.0
             let originY = rect.midY - pixelSize * 8.0
 
-            for row in 0..<pixels.count {
-                for column in 0..<pixels[row].count where pixels[row][column] {
+            for row in 0..<PixelLogoPattern.pixels.count {
+                for column in 0..<PixelLogoPattern.pixels[row].count where PixelLogoPattern.pixels[row][column] {
                     let x = originX + CGFloat(column) * pixelSize
                     let y = originY + CGFloat(15 - row) * pixelSize
                     NSRect(x: x, y: y, width: pixelSize, height: pixelSize).fill()
@@ -22,28 +22,5 @@ enum MenuBarIcon {
         image.isTemplate = true
         image.accessibilityDescription = "HealthyVibe"
         return image
-    }
-
-    private static let pixels: [[Bool]] = [
-        row("   #######      "),
-        row(" ##       ##    "),
-        row("#  #######  #   "),
-        row("# ######### ### "),
-        row("# #########    #"),
-        row("# ######### #  #"),
-        row("#  #######  ## #"),
-        row("#           #  #"),
-        row("#              #"),
-        row("#             # "),
-        row("#           ##  "),
-        row(" #         #    "),
-        row(" #         #    "),
-        row("  #       #     "),
-        row("   #######      "),
-        row("                ")
-    ]
-
-    private static func row(_ value: String) -> [Bool] {
-        value.map { $0 == "#" }
     }
 }

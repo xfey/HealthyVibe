@@ -125,7 +125,7 @@ final class AppDatabaseTests: XCTestCase {
     func testPersistsTeamProfileAndRankingCache() throws {
         let database = try makeDatabase()
         let profile = TeamIdentity.makeProfile(
-            teamCode: "ABCD-EFGH-IJKL",
+            teamCode: "123456",
             memberID: "member-1",
             displayName: "xfey"
         )

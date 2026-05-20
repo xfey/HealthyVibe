@@ -80,4 +80,24 @@ final class TaskEngineTests: XCTestCase {
         XCTAssertEqual(state.completedTaskCount, 0)
         XCTAssertNil(state.currentTask)
     }
+
+    func testLongevityCopyUsesGranularLifeMilestones() {
+        XCTAssertEqual(LongevityCopy.suffix(forTotalMinutes: 10), "可以下楼吃一个冰激凌")
+        XCTAssertEqual(LongevityCopy.suffix(forTotalMinutes: 40), "可以游泳 40 分钟，约消耗 300 千卡")
+        XCTAssertEqual(LongevityCopy.suffix(forTotalMinutes: 80), "可以读完一本《小王子》")
+        XCTAssertNotEqual(
+            LongevityCopy.suffix(forTotalMinutes: 2),
+            LongevityCopy.suffix(forTotalMinutes: 4)
+        )
+    }
+
+    func testRewardCopyRotatesByTaskCompletionCount() throws {
+        let template = try XCTUnwrap(TaskTemplate.defaultTemplates.first { $0.id == "water" })
+        let first = LongevityCopy.rewardLine(for: DailyTaskItem(template: template, completedCount: 0))
+        let second = LongevityCopy.rewardLine(for: DailyTaskItem(template: template, completedCount: 1))
+
+        XCTAssertNotEqual(first, second)
+        XCTAssertTrue(first.contains("延寿 +2 分钟"))
+        XCTAssertTrue(second.contains("延寿 +2 分钟"))
+    }
 }

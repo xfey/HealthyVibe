@@ -4,21 +4,23 @@ import XCTest
 final class TeamIdentityTests: XCTestCase {
     func testNormalizesTeamCodeAndHashesIdentity() {
         let profile = TeamIdentity.makeProfile(
-            teamCode: "ab12 cd34",
+            teamCode: "12 34-56",
             memberID: "member-1",
             displayName: " xfey "
         )
 
-        XCTAssertEqual(profile.teamCode, "AB12-CD34")
+        XCTAssertEqual(profile.teamCode, "123456")
         XCTAssertEqual(profile.displayName, "xfey")
         XCTAssertEqual(profile.teamCodeHash.count, 64)
         XCTAssertEqual(profile.memberIDHash.count, 64)
+        XCTAssertTrue(TeamIdentity.isValidTeamCode("123456"))
+        XCTAssertFalse(TeamIdentity.isValidTeamCode("12345"))
     }
 
     func testGeneratedTeamCodeIsShareable() {
         let code = TeamIdentity.generateTeamCode()
-        XCTAssertEqual(code.split(separator: "-").count, 3)
-        XCTAssertEqual(code.replacingOccurrences(of: "-", with: "").count, 12)
+        XCTAssertEqual(code.count, 6)
+        XCTAssertTrue(code.allSatisfy(\.isNumber))
     }
 }
 

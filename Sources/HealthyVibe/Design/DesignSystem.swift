@@ -1,8 +1,8 @@
 import SwiftUI
 
 enum LayoutMetrics {
-    static let popoverWidth: CGFloat = 340
-    static let popoverHeight: CGFloat = 356
+    static let popoverWidth: CGFloat = 228
+    static let popoverHeight: CGFloat = 232
 }
 
 enum HVSpacing {
@@ -14,8 +14,8 @@ enum HVSpacing {
 }
 
 enum HVRadius {
-    static let small: CGFloat = 6
-    static let medium: CGFloat = 8
+    static let small: CGFloat = 0
+    static let medium: CGFloat = 0
 }
 
 enum HVColor {
@@ -58,14 +58,14 @@ struct HVProgressBar: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                Capsule()
+                Rectangle()
                     .fill(HVColor.border.opacity(0.55))
-                Capsule()
+                Rectangle()
                     .fill(value >= 1 ? HVColor.warmAccent : HVColor.calmAccent)
                     .frame(width: max(0, min(proxy.size.width, proxy.size.width * value)))
             }
         }
-        .frame(height: 8)
+        .frame(height: 5)
         .accessibilityLabel("今日延寿进度")
         .accessibilityValue("\(Int(value * 100))%")
     }
@@ -76,12 +76,11 @@ struct HVPrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: 11, weight: .bold, design: .monospaced))
             .foregroundStyle(Color.white.opacity(isEnabled ? 1 : 0.72))
-            .frame(height: 32)
+            .frame(height: 26)
             .frame(maxWidth: .infinity)
             .background(backgroundColor(isPressed: configuration.isPressed))
-            .clipShape(RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous))
     }
 
     private func backgroundColor(isPressed: Bool) -> Color {
@@ -98,14 +97,13 @@ struct HVSecondaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 13, weight: .medium))
+            .font(.system(size: 11, weight: .bold, design: .monospaced))
             .foregroundStyle(isEnabled ? HVColor.primaryText : HVColor.mutedText)
-            .frame(height: 32)
+            .frame(height: 26)
             .frame(maxWidth: .infinity)
             .background(backgroundColor(isPressed: configuration.isPressed))
-            .clipShape(RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: HVRadius.small, style: .continuous)
+                Rectangle()
                     .stroke(HVColor.border, lineWidth: 1)
             )
     }
@@ -116,5 +114,73 @@ struct HVSecondaryButtonStyle: ButtonStyle {
         }
 
         return isPressed ? HVColor.border.opacity(0.55) : HVColor.surface
+    }
+}
+
+struct HVCompactButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    let isPrimary: Bool
+
+    init(isPrimary: Bool = false) {
+        self.isPrimary = isPrimary
+    }
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 10, weight: .bold, design: .monospaced))
+            .foregroundStyle(textColor)
+            .frame(height: 21)
+            .frame(maxWidth: .infinity)
+            .background(backgroundColor(isPressed: configuration.isPressed))
+            .overlay(
+                Rectangle()
+                    .stroke(isPrimary ? Color.clear : HVColor.border, lineWidth: 1)
+            )
+    }
+
+    private var textColor: Color {
+        if isPrimary {
+            return Color.white.opacity(isEnabled ? 1 : 0.72)
+        }
+
+        return isEnabled ? HVColor.primaryText : HVColor.mutedText
+    }
+
+    private func backgroundColor(isPressed: Bool) -> Color {
+        guard isEnabled else {
+            return isPrimary ? HVColor.border : HVColor.surface.opacity(0.62)
+        }
+
+        if isPrimary {
+            return isPressed ? HVColor.warmAccent.opacity(0.82) : HVColor.warmAccent
+        }
+
+        return isPressed ? HVColor.border.opacity(0.55) : HVColor.surface
+    }
+}
+
+struct HVPixelLogoMark: View {
+    let color: Color
+
+    var body: some View {
+        Canvas { context, size in
+            let pixelSize = max(1.0, floor(min(size.width, size.height) / 18.0))
+            let originX = (size.width - pixelSize * 16.0) / 2.0
+            let originY = (size.height - pixelSize * 16.0) / 2.0
+
+            for row in 0..<PixelLogoPattern.pixels.count {
+                for column in 0..<PixelLogoPattern.pixels[row].count where PixelLogoPattern.pixels[row][column] {
+                    let rect = CGRect(
+                        x: originX + CGFloat(column) * pixelSize,
+                        y: originY + CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    context.fill(Path(rect), with: .color(color))
+                }
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityHidden(true)
     }
 }
