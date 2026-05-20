@@ -1,20 +1,60 @@
 # HealthyVibe / Vibe延寿指南
 
-HealthyVibe 是一个 macOS 菜单栏应用，把 Claude Code / Codex 等 AI coding agent 的等待时间变成轻量健康微休息。
+HealthyVibe 是一款给 AI 时代程序员准备的 macOS 菜单栏健康提醒工具。
 
-当你提交 prompt 后，HealthyVibe 通过系统通知提醒你做一张短任务卡：喝水、远眺、起身活动、肩颈活动、手腕活动或深呼吸。
+当你把 prompt 交给 Claude Code / Codex，等待 AI 写代码的时候，HealthyVibe 会轻轻提醒你：起来喝口水、远眺一下、活动肩颈、动动手腕。让 AI 干活的时候，碳基生物也顺手续一会儿命。
 
-## MVP 功能
+这不是医学建议，只是一个温柔的小工具：让 AI 多写一点代码，让我们多活一点生活。
 
-- macOS 菜单栏 popover，包含今日任务、小队、日历、设置、关于五页。
-- Claude Code / Codex `UserPromptSubmit` hook 接入。
-- 系统通知提醒，不做自定义弹窗，通知内支持 `已完成`、`30分钟后提醒`、`两小时后提醒`。
-- 完成任务后进入 30 分钟冷却；未确认的任务会在后续 hook 继续提醒。
-- 连续 60 分钟活跃无 hook 时兜底提醒。
-- 每日固定任务池，完成后不立即补发下一张。
-- 今日 30 分钟延寿进度和本地历史日历。
-- 轻量小队排行榜，无账号系统。
-- Homebrew Cask / shell script 风格安装入口。
+## 安装
+
+```bash
+brew install --cask xfey/tap/healthyvibe
+```
+
+或者：
+
+```bash
+brew tap xfey/tap
+brew install --cask healthyvibe
+```
+
+安装后启动 `HealthyVibe.app`，它只会出现在菜单栏里。后续连接 Claude Code / Codex、通知权限、小队等配置都在菜单栏小窗口里完成。
+
+## 它会做什么
+
+- 在 Claude Code / Codex 收到你的 prompt 后提醒你休息一下。
+- 使用系统通知，不做突兀的自定义弹窗。
+- 通知里可以直接选择 `已完成`、`30分钟后提醒`、`两小时后提醒`。
+- 健康任务包括喝水、远眺、起身活动、肩颈活动、手腕活动和深呼吸。
+- 每天有 30 分钟“延寿”目标，完成任务会填充进度条。
+- 日历页记录过去每天的延寿分钟和完成情况。
+- 小队页可以创建 / 加入 6 位码小队，看看今天谁最会续命。
+- 支持 Homebrew / CLI 风格安装，但日常使用保持 GUI。
+
+## 小队
+
+小队不需要账号。
+
+点击 `创建` 会自动生成一个 6 位邀请码。把这个号码发给朋友，朋友在小队页输入同一个 6 位码并点击 `加入`，就会进入同一个当天排行榜。
+
+Relay 只保存小队 hash、匿名 member hash、日期、延寿分钟、完成次数和更新时间。个人长期历史仍保存在本地 SQLite。
+
+## 隐私边界
+
+HealthyVibe 的 hook bridge 会丢弃输入内容，只写入最小事件：
+
+```json
+{
+  "source": "codex 或 claude",
+  "event": "prompt_submitted",
+  "receivedAt": "时间戳"
+}
+```
+
+它不会保存 prompt、代码、diff、路径、命令内容，也不会把这些内容上传到 relay。
+
+小队功能只上传匿名 hash、日期、延寿分钟和完成任务次数，用于生成当天排行榜。
 
 ## 本地开发
 
@@ -75,24 +115,11 @@ npm run typecheck
 npm test
 ```
 
-Relay 只保存小队 hash、匿名 member hash、日期、延寿分钟、完成次数和更新时间。它不接收、不保存 prompt、代码、diff、路径或 hook 原始 payload。
-
-## 隐私边界
-
-- Claude Code / Codex 的 `UserPromptSubmit` hook 可能把 prompt payload 通过 stdin 传给 hook command；HealthyVibe 的 hook bridge 只执行 `cat >/dev/null` 丢弃 stdin，不解析、不输出、不落盘、不上传。
-- 本地只记录 `source`、`event`、`receivedAt` 这类最小事件，用于判断 agent 是否刚开始工作。
-- 完成任务后的 30 分钟冷却内，hook 仍会记录，但不会重复下发任务或发送系统通知。
-- 个人历史保存在本地 SQLite。
-- 小队上传只包含匿名 hash 和当天榜单结果。
-- Relay 不接收 hook 原始 payload，不接收 prompt、代码、diff、文件路径或命令内容。
-
 ## 致谢
 
 HealthyVibe 的「延寿」表达和部分健康任务灵感来自 [程序员延寿指南](https://github.com/geekan/HowToLiveLonger)。
 
-## 免责声明
-
-延寿分钟是 HealthyVibe 内的娱乐积分，用于鼓励短暂休息和轻量活动，不构成医学建议。
+也感谢那些愿意把等待 AI 的几十秒，换成喝水、远眺和起身活动的人。
 
 ## License
 

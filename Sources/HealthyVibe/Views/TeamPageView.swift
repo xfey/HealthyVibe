@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import HealthyVibeTeam
 
@@ -53,6 +54,21 @@ struct TeamPageView: View {
                 Text("今天还没有队友上榜")
                     .font(.system(size: 11))
                     .foregroundStyle(HVColor.secondaryText)
+            }
+
+            HStack(spacing: 5) {
+                Text("邀请码 \(profile.teamCode)")
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .foregroundStyle(HVColor.mutedText)
+                    .lineLimit(1)
+
+                Spacer(minLength: 0)
+
+                Button("复制") {
+                    copyTeamCode(profile.teamCode)
+                }
+                .buttonStyle(HVCompactButtonStyle())
+                .frame(width: 34)
             }
 
             if let message = appModel.teamStatusMessage {
@@ -154,5 +170,10 @@ struct TeamPageView: View {
         }
 
         return "队友 \(String(member.memberIdHash.prefix(4)))"
+    }
+
+    private func copyTeamCode(_ code: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(code, forType: .string)
     }
 }
