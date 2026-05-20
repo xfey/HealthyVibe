@@ -165,7 +165,7 @@ brew uninstall --cask healthyvibe/local/healthyvibe
 透明安装脚本本地验证：
 
 ```bash
-HEALTHYVIBE_ZIP_PATH="$PWD/dist/HealthyVibe-1.0.1.zip" \
+HEALTHYVIBE_ZIP_PATH="$PWD/dist/HealthyVibe-1.0.2.zip" \
 HEALTHYVIBE_INSTALL_DIR="$(mktemp -d)/apps" \
 HEALTHYVIBE_SKIP_OPEN=1 \
 ./Scripts/install.sh

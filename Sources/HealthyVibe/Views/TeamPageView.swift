@@ -9,19 +9,15 @@ struct TeamPageView: View {
     private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: HVSpacing.small) {
-            ScrollView(.vertical, showsIndicators: false) {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: HVSpacing.small) {
                 if let profile = appModel.teamProfile {
                     joinedContent(profile)
                 } else {
                     emptyContent
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-
-            Spacer(minLength: 0)
-
-            bottomControl
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .padding(.horizontal, 18)
         .padding(.top, 14)
@@ -62,7 +58,7 @@ struct TeamPageView: View {
 
             if let ranking = appModel.teamRanking, !ranking.members.isEmpty {
                 VStack(alignment: .leading, spacing: 3) {
-                    ForEach(ranking.members.prefix(4)) { member in
+                    ForEach(ranking.members) { member in
                         rankingRow(member, isSelf: member.memberIdHash == profile.memberIDHash)
                     }
                 }
@@ -93,6 +89,8 @@ struct TeamPageView: View {
                     .foregroundStyle(HVColor.mutedText)
                     .lineLimit(1)
             }
+
+            bottomControl
         }
     }
 
@@ -113,6 +111,8 @@ struct TeamPageView: View {
                     .foregroundStyle(HVColor.mutedText)
                     .lineLimit(2)
             }
+
+            bottomControl
         }
     }
 
