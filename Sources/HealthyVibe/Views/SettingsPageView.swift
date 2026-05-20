@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import HealthyVibeAgents
 
@@ -23,6 +24,11 @@ struct SettingsPageView: View {
             }
 
             Spacer(minLength: 0)
+
+            Button("退出应用") {
+                NSApp.terminate(nil)
+            }
+            .buttonStyle(HVCompactButtonStyle())
         }
         .padding(.horizontal, 18)
         .padding(.top, 10)

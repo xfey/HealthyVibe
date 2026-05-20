@@ -5,6 +5,8 @@ import HealthyVibeTeam
 struct TeamPageView: View {
     @EnvironmentObject private var appModel: AppModel
     @State private var teamCodeInput = ""
+    @State private var displayNameInput = ""
+    private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(alignment: .leading, spacing: HVSpacing.small) {
@@ -24,6 +26,20 @@ struct TeamPageView: View {
         .padding(.horizontal, 18)
         .padding(.top, 14)
         .padding(.bottom, 2)
+        .onAppear {
+            displayNameInput = appModel.teamProfile?.displayName ?? ""
+            if appModel.teamProfile != nil {
+                appModel.syncTeamSnapshot()
+            }
+        }
+        .onChange(of: appModel.teamProfile?.displayName) { newValue in
+            displayNameInput = newValue ?? ""
+        }
+        .onReceive(refreshTimer) { _ in
+            if appModel.teamProfile != nil {
+                appModel.refreshTeamRanking()
+            }
+        }
     }
 
     private func joinedContent(_ profile: TeamProfile) -> some View {
@@ -104,14 +120,7 @@ struct TeamPageView: View {
     private var bottomControl: some View {
         if appModel.teamProfile == nil {
             HStack(spacing: 6) {
-                TextField("6位码", text: $teamCodeInput)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(HVColor.primaryText)
-                    .padding(.horizontal, 6)
-                    .frame(height: 21)
-                    .background(HVColor.border.opacity(0.25))
-                    .overlay(Rectangle().stroke(HVColor.border, lineWidth: 1))
+                compactTextField("6位码", text: $teamCodeInput, monospaced: true)
 
                 Button("加入") {
                     appModel.joinTeam(code: teamCodeInput)
@@ -135,10 +144,24 @@ struct TeamPageView: View {
                 }
             }
         } else {
-            Button("退出小队") {
-                appModel.leaveTeam()
+            VStack(spacing: 6) {
+                HStack(spacing: 6) {
+                    compactTextField("我的名字", text: $displayNameInput)
+
+                    Button("保存") {
+                        appModel.updateTeamDisplayName(displayNameInput)
+                    }
+                    .buttonStyle(HVCompactButtonStyle(isPrimary: hasDisplayNameChange))
+                    .frame(width: 38)
+                    .disabled(!hasDisplayNameChange)
+                }
+
+                Button("退出小队") {
+                    appModel.leaveTeam()
+                    displayNameInput = ""
+                }
+                .buttonStyle(HVCompactButtonStyle())
             }
-            .buttonStyle(HVCompactButtonStyle())
         }
     }
 
@@ -175,5 +198,26 @@ struct TeamPageView: View {
     private func copyTeamCode(_ code: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(code, forType: .string)
+    }
+
+    private var hasDisplayNameChange: Bool {
+        TeamIdentity.normalizeDisplayName(displayNameInput) != appModel.teamProfile?.displayName
+    }
+
+    private func compactTextField(
+        _ placeholder: String,
+        text: Binding<String>,
+        monospaced: Bool = false
+    ) -> some View {
+        TextField(placeholder, text: text)
+            .textFieldStyle(.plain)
+            .font(monospaced
+                  ? .system(size: 11, weight: .medium, design: .monospaced)
+                  : .system(size: 11, weight: .medium))
+            .foregroundStyle(HVColor.primaryText)
+            .padding(.horizontal, 6)
+            .frame(height: 21)
+            .background(HVColor.border.opacity(0.25))
+            .overlay(Rectangle().stroke(HVColor.border, lineWidth: 1))
     }
 }

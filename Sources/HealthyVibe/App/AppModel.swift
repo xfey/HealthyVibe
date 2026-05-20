@@ -314,6 +314,27 @@ final class AppModel: ObservableObject {
         saveTeam(code: code)
     }
 
+    func updateTeamDisplayName(_ displayName: String) {
+        guard let teamProfile else {
+            return
+        }
+
+        let updatedProfile = TeamIdentity.makeProfile(
+            teamCode: teamProfile.teamCode,
+            memberID: teamProfile.memberID,
+            displayName: displayName
+        )
+
+        do {
+            try database?.saveTeamProfile(updatedProfile)
+            self.teamProfile = updatedProfile
+            teamStatusMessage = updatedProfile.displayName == nil ? "昵称已清空" : "昵称已保存"
+            syncTeamSnapshot()
+        } catch {
+            recordError("保存昵称失败：\(error.localizedDescription)")
+        }
+    }
+
     func leaveTeam() {
         do {
             try database?.clearTeamProfile()
@@ -357,6 +378,31 @@ final class AppModel: ObservableObject {
             } catch {
                 teamStatusMessage = "Relay 暂不可用，本地进度已保存。"
                 AppLog.app.error("Team sync failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
+
+    func refreshTeamRanking() {
+        guard let teamProfile else {
+            return
+        }
+
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+
+            do {
+                let ranking = try await teamRelayClient.fetchRanking(
+                    teamCodeHash: teamProfile.teamCodeHash,
+                    date: todayTaskState.dateKey
+                )
+                try database?.saveTeamRankingCache(ranking)
+                teamRanking = ranking
+                teamStatusMessage = "小队已同步"
+            } catch {
+                teamStatusMessage = "Relay 暂不可用，本地进度已保存。"
+                AppLog.app.error("Team refresh failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -515,9 +561,7 @@ final class AppModel: ObservableObject {
         }
 
         let item: DailyTaskItem?
-        if let currentTask = todayTaskState.currentTask {
-            item = currentTask
-        } else if let database {
+        if let database {
             item = try database.deliverTask(in: &todayTaskState, source: source, now: now)
         } else {
             item = taskEngine.deliverTask(in: &todayTaskState, now: now)

@@ -15,6 +15,8 @@ final class TeamIdentityTests: XCTestCase {
         XCTAssertEqual(profile.memberIDHash.count, 64)
         XCTAssertTrue(TeamIdentity.isValidTeamCode("123456"))
         XCTAssertFalse(TeamIdentity.isValidTeamCode("12345"))
+        XCTAssertEqual(TeamIdentity.normalizeDisplayName("  这是一个很长的昵称  "), "这是一个很长的昵称")
+        XCTAssertNil(TeamIdentity.normalizeDisplayName("   "))
     }
 
     func testGeneratedTeamCodeIsShareable() {

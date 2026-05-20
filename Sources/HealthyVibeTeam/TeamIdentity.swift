@@ -3,6 +3,8 @@ import Foundation
 import Security
 
 public enum TeamIdentity {
+    public static let maxDisplayNameLength = 12
+
     public static func makeProfile(
         teamCode: String,
         memberID: String = UUID().uuidString,
@@ -14,7 +16,7 @@ public enum TeamIdentity {
             teamCodeHash: sha256Hex(normalizedCode),
             memberID: memberID,
             memberIDHash: sha256Hex(memberID),
-            displayName: displayName?.trimmingCharacters(in: .whitespacesAndNewlines)
+            displayName: normalizeDisplayName(displayName)
         )
     }
 
@@ -33,6 +35,19 @@ public enum TeamIdentity {
 
     public static func isValidTeamCode(_ code: String) -> Bool {
         normalizeTeamCode(code).count == 6
+    }
+
+    public static func normalizeDisplayName(_ displayName: String?) -> String? {
+        guard let displayName else {
+            return nil
+        }
+
+        let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+
+        return String(trimmed.prefix(maxDisplayNameLength))
     }
 
     public static func sha256Hex(_ value: String) -> String {

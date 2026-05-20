@@ -50,6 +50,20 @@ final class TaskEngineTests: XCTestCase {
         XCTAssertEqual(state.currentTask?.id, "look-away")
     }
 
+    func testDeliverTaskCanReselectFromRemainingTasksWhilePending() {
+        var choices = [0, 1]
+        let engine = TaskEngine(chooseCandidateIndex: { candidates in
+            candidates[choices.removeFirst()]
+        })
+        var state = engine.makeInitialState(for: Date(timeIntervalSince1970: 0))
+
+        engine.deliverTask(in: &state)
+        XCTAssertEqual(state.currentTask?.id, "water")
+
+        engine.deliverTask(in: &state)
+        XCTAssertEqual(state.currentTask?.id, "look-away")
+    }
+
     func testDepletedTaskIsNotDeliveredAgain() {
         let engine = TaskEngine(chooseCandidateIndex: { $0[0] })
         var state = engine.makeInitialState(for: Date(timeIntervalSince1970: 0))
