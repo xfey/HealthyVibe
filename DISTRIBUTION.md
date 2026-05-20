@@ -120,4 +120,4 @@ brew install --cask healthyvibe/local/healthyvibe
 brew uninstall --cask healthyvibe/local/healthyvibe
 ```
 
-未执行真实发布 notarization，因为当前仓库未配置 Developer ID 证书和 Apple notary profile。
+已验证真实发布 notarization：使用 Developer ID Application 证书和 `healthyvibe-notary` keychain profile 生成的 release app 可通过 notarization、staple 和 Gatekeeper 验证。

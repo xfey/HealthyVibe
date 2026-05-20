@@ -274,7 +274,7 @@
 
 ## Phase 6：安装与分发
 
-状态：已完成（本地打包和安装链路已验证；真实签名和 notarization 需要发布凭据）。
+状态：已完成（本地打包、Developer ID 签名、notarization 和安装链路已验证）。
 
 目标：让程序员能通过 CLI 风格安装，但日常使用仍是 GUI。
 
@@ -310,7 +310,7 @@
 - Homebrew Cask uninstall preflight 会移除 HealthyVibe 自己写入的 Claude Code / Codex hook handler，不删除用户其他 hook。
 - 已用临时 Homebrew tap、临时 `HOME` 和临时 `--appdir` 验证 cask 安装/卸载链路。
 - 已验证透明安装脚本可从本地 zip 安装到指定目录。
-- 当前未执行真实 Apple notarization 提交，因为本地没有 Developer ID 证书和 notary profile。
+- 已使用 Developer ID Application 证书和 `healthyvibe-notary` keychain profile 完成真实 Apple notarization；release app 已通过 staple 和 Gatekeeper 验证。
 
 ## Phase 7：体验打磨与发布准备
 

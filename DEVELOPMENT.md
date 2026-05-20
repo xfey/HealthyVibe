@@ -183,7 +183,7 @@ HEALTHYVIBE_SKIP_OPEN=1 \
 - `HEALTHYVIBE_NOTARY_PROFILE`：`xcrun notarytool store-credentials` 保存的 keychain profile。
 - `HEALTHYVIBE_RELEASE_URL`：生成线上 cask 时写入的 release artifact URL。
 
-当前未执行真实 Apple notarization，因为本地没有 Developer ID 证书和 notary profile。
+已验证真实 Apple notarization：使用 Developer ID Application 证书和 `healthyvibe-notary` keychain profile 生成的 release app 可通过 notarization、staple 和 Gatekeeper 验证。
 
 ## Phase 7 验证
 
