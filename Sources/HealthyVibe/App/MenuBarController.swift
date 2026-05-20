@@ -39,11 +39,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             return
         }
 
-        let image = NSImage(systemSymbolName: "heart.text.square", accessibilityDescription: "HealthyVibe")
-            ?? NSImage(systemSymbolName: "heart", accessibilityDescription: "HealthyVibe")
-        image?.isTemplate = true
-
-        button.image = image
+        button.image = MenuBarIcon.makeImage()
         button.action = #selector(togglePopover(_:))
         button.target = self
         button.toolTip = "Vibe延寿指南"

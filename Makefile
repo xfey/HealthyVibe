@@ -1,4 +1,4 @@
-.PHONY: build bundle release-bundle package run clean
+.PHONY: build bundle release-bundle package run icon clean
 
 build:
 	swift build
@@ -14,6 +14,9 @@ package:
 
 run: bundle
 	open .build/HealthyVibe.app
+
+icon:
+	swift Scripts/generate_icons.swift
 
 clean:
 	swift package clean
