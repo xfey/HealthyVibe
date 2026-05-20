@@ -17,8 +17,8 @@ make package
 输出：
 
 ```text
-dist/HealthyVibe-0.1.0.zip
-dist/HealthyVibe-0.1.0.zip.sha256
+dist/HealthyVibe-1.0.0.zip
+dist/HealthyVibe-1.0.0.zip.sha256
 dist/healthyvibe.rb
 ```
 
@@ -68,7 +68,7 @@ make package
 生成 GitHub Release URL 版 cask：
 
 ```bash
-HEALTHYVIBE_RELEASE_URL="https://github.com/xfey/HealthyVibe/releases/download/v0.1.0/HealthyVibe-0.1.0.zip" make package
+HEALTHYVIBE_RELEASE_URL="https://github.com/xfey/HealthyVibe/releases/download/v1.0.0/HealthyVibe-1.0.0.zip" make package
 ```
 
 生成的 `dist/healthyvibe.rb` 包含：
@@ -86,7 +86,7 @@ Homebrew 5.1 起会拒绝直接安装任意路径 cask；本地验证需要放�
 本地验证：
 
 ```bash
-HEALTHYVIBE_ZIP_PATH="$PWD/dist/HealthyVibe-0.1.0.zip" \
+HEALTHYVIBE_ZIP_PATH="$PWD/dist/HealthyVibe-1.0.0.zip" \
 HEALTHYVIBE_INSTALL_DIR="/tmp/HealthyVibeInstall" \
 HEALTHYVIBE_SKIP_OPEN=1 \
 ./Scripts/install.sh

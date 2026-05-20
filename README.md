@@ -46,8 +46,8 @@ make package
 输出：
 
 ```text
-dist/HealthyVibe-0.1.0.zip
-dist/HealthyVibe-0.1.0.zip.sha256
+dist/HealthyVibe-1.0.0.zip
+dist/HealthyVibe-1.0.0.zip.sha256
 dist/healthyvibe.rb
 ```
 

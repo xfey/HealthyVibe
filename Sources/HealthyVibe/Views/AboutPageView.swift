@@ -30,7 +30,7 @@ struct AboutPageView: View {
 
             Spacer(minLength: 0)
 
-            Text("HealthyVibe 0.1.0")
+            Text("HealthyVibe \(appVersion)")
                 .font(.system(size: 9, weight: .medium, design: .monospaced))
                 .foregroundStyle(HVColor.mutedText)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -51,5 +51,9 @@ struct AboutPageView: View {
         }
 
         return URL(string: "https://github.com/xfey/HealthyVibe/\(path)")!
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
     }
 }

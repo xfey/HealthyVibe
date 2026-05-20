@@ -45,6 +45,6 @@
 
 - [x] `make package` 生成 release zip、sha256 和 cask。
 - [x] `ruby -c dist/healthyvibe.rb` 通过。
-- [ ] 临时 Homebrew tap 中可以安装/卸载 cask。
-- [ ] 本地安装脚本可以从 zip 安装到指定目录。
+- [x] 临时 Homebrew tap 中可以安装/卸载 cask。
+- [x] 本地安装脚本可以从 zip 安装到指定目录。
 - [x] 有 Developer ID 凭据时完成签名和 notarization。
