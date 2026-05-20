@@ -35,6 +35,12 @@ brew install --cask xfey/tap/healthyvibe
 
 安装完成后，打开 `HealthyVibe.app`。它不会弹出一个大窗口，只会出现在 macOS 菜单栏里。
 
+更新也可以使用一行命令：
+
+```bash
+brew update && brew upgrade --cask healthyvibe
+```
+
 ## 怎么用
 
 第一次打开后，点击菜单栏里的 HealthyVibe 图标。
