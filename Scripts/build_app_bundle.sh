@@ -21,4 +21,7 @@ if [[ -f "Resources/HealthyVibe.icns" ]]; then
 fi
 chmod +x "$APP_DIR/Contents/MacOS/HealthyVibe"
 
+BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_DIR/Contents/Info.plist")"
+codesign --force --deep --sign - --identifier "$BUNDLE_ID" "$APP_DIR" >/dev/null
+
 echo "$APP_DIR"

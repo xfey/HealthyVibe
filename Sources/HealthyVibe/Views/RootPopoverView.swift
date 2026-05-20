@@ -127,8 +127,9 @@ struct RootPopoverView: View {
     }
 
     private func selectPreviousPage() {
-        let pages = AppPage.allCases
+        let pages = AppPage.visibleCases
         guard let index = pages.firstIndex(of: appModel.selectedPage) else {
+            appModel.selectedPage = pages.first ?? .today
             return
         }
 
@@ -136,8 +137,9 @@ struct RootPopoverView: View {
     }
 
     private func selectNextPage() {
-        let pages = AppPage.allCases
+        let pages = AppPage.visibleCases
         guard let index = pages.firstIndex(of: appModel.selectedPage) else {
+            appModel.selectedPage = pages.first ?? .today
             return
         }
 
@@ -145,11 +147,11 @@ struct RootPopoverView: View {
     }
 
     private var isFirstPage: Bool {
-        appModel.selectedPage == AppPage.allCases.first
+        appModel.selectedPage == AppPage.visibleCases.first
     }
 
     private var isLastPage: Bool {
-        appModel.selectedPage == AppPage.allCases.last
+        appModel.selectedPage == AppPage.visibleCases.last
     }
 }
 
@@ -165,7 +167,7 @@ private struct PixelPageIndicator: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            ForEach(AppPage.allCases) { page in
+            ForEach(AppPage.visibleCases) { page in
                 Button {
                     withAnimation(.easeOut(duration: 0.12)) {
                         selection = page

@@ -23,7 +23,7 @@
 - [x] 最低系统版本设为 macOS 13 Ventura+。
 - [x] 接入 `NSStatusItem + NSPopover`。
 - [x] 建立基础 Design System：颜色、间距、按钮、进度条、卡片、分页。
-- [x] 建立三页 popover 骨架：今日任务、日历、设置。
+- [x] 建立 popover 骨架：今日任务、日历、设置、关于。
 - [x] 引入 GRDB.swift 或先预留数据库层接口。
 - [x] 建立本地目录结构：
   - [x] `~/Library/Application Support/HealthyVibe/`
@@ -148,7 +148,8 @@
 - [x] 接入 `UNUserNotificationCenter`。
 - [x] 实现通知权限申请和状态展示。
 - [x] 点击通知后打开菜单栏 popover 的今日任务页。
-- [x] 实现 30 分钟任务下发冷却。
+- [x] 实现完成任务后的 30 分钟冷却。
+- [x] 实现通知 action：已完成、30 分钟后提醒、两小时后提醒。
 - [x] 实现 60 分钟活跃无 hook 兜底提醒。
 - [x] 实现 active time tracker：
   - [x] 睡眠不累计。
@@ -169,7 +170,8 @@
 
 - 新增 `NotificationService`，使用系统通知，不做自定义弹窗和通知按钮。
 - 设置页展示通知权限状态，支持申请权限、打开系统设置、模拟 `prompt_submitted`。
-- 模拟 prompt 会记录最小 hook event、按 30 分钟冷却下发任务，并在权限允许时发送系统通知。
+- 模拟 prompt 会记录最小 hook event、按完成冷却和稍后提醒状态下发任务，并在权限允许时发送系统通知。
+- 通知内的 `已完成` 会直接完成当前任务并启动 30 分钟冷却；`30分钟后提醒` 和 `两小时后提醒` 会安排延迟系统通知。
 - 点击通知通过 `UNUserNotificationCenterDelegate` 打开菜单栏 popover 的今日任务页。
 - 新增 `ActiveTimeTracker`，监听睡眠、屏幕睡眠、会话失活，以及唤醒、屏幕唤醒、会话恢复。
 - 新增 `ActiveTimeAccumulator` 单测，确保非活跃时间不累计，hook event 会重置 60 分钟兜底计时。
@@ -228,7 +230,7 @@
 
 ## Phase 5：小队 Relay
 
-状态：已完成。
+状态：已完成，生产 relay 已上线。
 
 目标：提供轻量小队当天排行榜。
 
@@ -258,6 +260,8 @@
 实现记录：
 
 - 新增 `relay/`，使用 Cloudflare Workers + D1，提供 snapshot upsert 和当日 ranking 查询。
+- 生产 relay 已由服务器侧以 Node.js + SQLite 实现并上线，地址为 `https://healthyvibe.owlib.ai`。
+- 服务通过 nginx 反向代理到 `127.0.0.1:8787`，systemd 服务名为 `healthyvibe-relay`。
 - Relay 只保存 `team_code_hash`、`member_id_hash`、可选 display name、日期、延寿分钟、完成次数和更新时间。
 - Relay 每次 snapshot 写入时清理 3 天前数据，满足 48-72 小时容错。
 - 新增 `HealthyVibeTeam` target，负责 team code、匿名 member id hash、Relay client 和 ranking model。
@@ -338,7 +342,7 @@
 
 验收：
 
-- [x] 一个新用户能在 5 分钟内完成安装、打开、连接 agent、收到测试提醒。
+- [x] 一个新用户能在 5 分钟内完成安装、打开、连接 agent、收到提醒。
 - [x] 菜单栏页面无明显拥挤和文字溢出。
 - [x] 系统通知不会高频打扰。
 - [x] 隐私边界在设置页能清楚说明。
@@ -347,7 +351,7 @@
 
 - 今日页移除开发期手动下发入口，保留真实等待、完成、全部完成、目标达成状态。
 - 未连接 Agent 时，今日页提供进入设置页的明确入口。
-- 设置页状态文案统一中文化，并补充 hook 和 relay 的隐私边界说明。
+- 设置页状态文案统一中文化，并补充 hook 隐私边界说明。
 - 进度条在达成目标后切换为温暖强调色，并显示 `目标达成` 标签。
 - 日历累计文案允许两行展示，降低小 popover 内文字溢出风险。
 - 新增 `README.md`，说明产品、开发、打包、Relay 和隐私边界。
@@ -359,7 +363,7 @@
 早期讨论中，首轮开发曾建议只做到 Phase 0 到 Phase 3：
 
 - 菜单栏 popover。
-- 三页结构。
+- 菜单栏分页结构。
 - 本地任务池。
 - 本地 SQLite。
 - 日历。

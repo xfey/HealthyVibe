@@ -7,11 +7,14 @@ struct TeamPageView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: HVSpacing.small) {
-            if let profile = appModel.teamProfile {
-                joinedContent(profile)
-            } else {
-                emptyContent
+            ScrollView(.vertical, showsIndicators: false) {
+                if let profile = appModel.teamProfile {
+                    joinedContent(profile)
+                } else {
+                    emptyContent
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
             Spacer(minLength: 0)
 
@@ -25,11 +28,10 @@ struct TeamPageView: View {
     private func joinedContent(_ profile: TeamProfile) -> some View {
         VStack(alignment: .leading, spacing: HVSpacing.small) {
             HStack(alignment: .firstTextBaseline) {
-                Text(profile.teamCode)
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                Text("排名")
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(HVColor.primaryText)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
 
                 Spacer(minLength: HVSpacing.small)
 

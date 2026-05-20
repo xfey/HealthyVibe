@@ -7,6 +7,14 @@ enum AppPage: String, CaseIterable, Identifiable {
     case settings
     case about
 
+    static let visibleCases: [AppPage] = [
+        .today,
+        .team,
+        .calendar,
+        .settings,
+        .about
+    ]
+
     var id: String { rawValue }
 
     var title: String {

@@ -15,10 +15,17 @@ struct AboutPageView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            VStack(spacing: 5) {
-                aboutLink("GitHub 仓库", path: "")
-                aboutLink("医学声明", path: "blob/main/PRD.md")
-                aboutLink("开源许可", path: "blob/main/LICENSE")
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 5),
+                    GridItem(.flexible(), spacing: 5)
+                ],
+                spacing: 5
+            ) {
+                aboutLink("GitHub 仓库", destination: githubURL(path: ""))
+                aboutLink("医学声明", destination: githubURL(path: "blob/main/PRD.md"))
+                aboutLink("开源许可", destination: githubURL(path: "blob/main/LICENSE"))
+                aboutLink("延寿指南", destination: URL(string: "https://github.com/geekan/HowToLiveLonger")!)
             }
 
             Spacer(minLength: 0)
@@ -33,8 +40,8 @@ struct AboutPageView: View {
         .padding(.bottom, 2)
     }
 
-    private func aboutLink(_ title: String, path: String) -> some View {
-        Link(title, destination: githubURL(path: path))
+    private func aboutLink(_ title: String, destination: URL) -> some View {
+        Link(title, destination: destination)
             .buttonStyle(HVCompactButtonStyle())
     }
 

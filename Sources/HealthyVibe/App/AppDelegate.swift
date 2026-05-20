@@ -12,6 +12,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notificationService.onNotificationActivated = { [weak self] in
             self?.menuBarController.show(page: .today)
         }
+        notificationService.onTaskNotificationAction = { [weak self] action in
+            self?.appModel.handleTaskNotificationAction(action)
+        }
         appModel.attachNotificationService(notificationService)
     }
 

@@ -6,10 +6,11 @@ HealthyVibe 是一个 macOS 菜单栏应用，把 Claude Code / Codex 等 AI cod
 
 ## MVP 功能
 
-- macOS 菜单栏 popover，包含今日任务、日历、设置三页。
+- macOS 菜单栏 popover，包含今日任务、小队、日历、设置、关于五页。
 - Claude Code / Codex `UserPromptSubmit` hook 接入。
-- 系统通知提醒，不做自定义弹窗。
-- 30 分钟冷却，连续 60 分钟活跃无 hook 时兜底提醒。
+- 系统通知提醒，不做自定义弹窗，通知内支持 `已完成`、`30分钟后提醒`、`两小时后提醒`。
+- 完成任务后进入 30 分钟冷却；未确认的任务会在后续 hook 继续提醒。
+- 连续 60 分钟活跃无 hook 时兜底提醒。
 - 每日固定任务池，完成后不立即补发下一张。
 - 今日 30 分钟延寿进度和本地历史日历。
 - 轻量小队排行榜，无账号系统。
@@ -54,7 +55,19 @@ dist/healthyvibe.rb
 
 ## Relay
 
-小队 Relay 位于 `relay/`：
+生产 Relay 地址：
+
+```text
+https://healthyvibe.owlib.ai
+```
+
+健康检查：
+
+```text
+https://healthyvibe.owlib.ai/healthz
+```
+
+Relay 参考实现与接口文档位于 `relay/`：
 
 ```bash
 cd relay
@@ -66,10 +79,16 @@ Relay 只保存小队 hash、匿名 member hash、日期、延寿分钟、完成
 
 ## 隐私边界
 
-- Hook bridge 会读取 stdin 后立即丢弃，不保存 prompt。
-- 本地只记录 `source`、`event`、`receivedAt` 这类最小事件。
+- Claude Code / Codex 的 `UserPromptSubmit` hook 可能把 prompt payload 通过 stdin 传给 hook command；HealthyVibe 的 hook bridge 只执行 `cat >/dev/null` 丢弃 stdin，不解析、不输出、不落盘、不上传。
+- 本地只记录 `source`、`event`、`receivedAt` 这类最小事件，用于判断 agent 是否刚开始工作。
+- 完成任务后的 30 分钟冷却内，hook 仍会记录，但不会重复下发任务或发送系统通知。
 - 个人历史保存在本地 SQLite。
 - 小队上传只包含匿名 hash 和当天榜单结果。
+- Relay 不接收 hook 原始 payload，不接收 prompt、代码、diff、文件路径或命令内容。
+
+## 致谢
+
+HealthyVibe 的「延寿」表达和部分健康任务灵感来自 [程序员延寿指南](https://github.com/geekan/HowToLiveLonger)。
 
 ## 免责声明
 

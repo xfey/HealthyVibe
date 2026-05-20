@@ -11,6 +11,10 @@
 - [ ] 连接 Claude Code 或 Codex。
 - [ ] 点击设置页的 `模拟 prompt_submitted`。
 - [ ] 收到系统通知。
+- [ ] 不点击通知 action 时，再次提交 prompt 仍会继续收到提醒。
+- [ ] 点击通知里的 `已完成` 后，任务完成并进入 30 分钟冷却。
+- [ ] 点击通知里的 `30分钟后提醒` 或 `两小时后提醒` 后，冷却期内不重复通知，并在到期后收到延迟通知。
+- [ ] 完成冷却内再次提交 prompt 时，设置页显示 hook 已收到和冷却剩余时间，不重复通知。
 - [ ] 点击通知后打开今日任务页。
 - [ ] 点击 `完成` 后今日进度增加，任务不会立即补发。
 
@@ -24,13 +28,14 @@
 - [ ] 今日页全部完成：不再出现完成按钮或补发入口。
 - [ ] 日历页：当月日期、今日、连续、累计和选中日期详情可读。
 - [ ] 设置页：通知关闭时展示原因和系统设置入口。
-- [ ] 设置页：Claude Code / Codex 连接、断开、测试可用。
-- [ ] 设置页：未加入小队时不在今日页显示排名。
-- [ ] 设置页：Relay 不可用时展示轻量状态文案，不阻塞本地任务完成。
+- [ ] 设置页：Claude Code / Codex 连接、断开可用。
+- [ ] 小队页：未加入时可创建小队或输入 6 位码加入。
+- [ ] 小队页：加入后可查看今日排行榜，Relay 不可用时不阻塞本地任务完成。
 
 ## 隐私与卸载
 
 - [ ] hook bridge 写入的事件不包含 prompt。
+- [ ] hook bridge 只丢弃 stdin，不解析、不输出、不上传 hook payload。
 - [ ] Claude Code / Codex 断开时只删除 HealthyVibe 自己写入的 hook。
 - [ ] Homebrew Cask uninstall preflight 只删除 HealthyVibe hook handler。
 - [ ] `zap` 清理 `~/Library/Application Support/HealthyVibe`。

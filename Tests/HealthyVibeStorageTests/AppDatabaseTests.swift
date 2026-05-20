@@ -113,6 +113,16 @@ final class AppDatabaseTests: XCTestCase {
         try database.saveLastReminderDate(date)
         XCTAssertEqual(try database.loadLastReminderDate(), date)
 
+        let cooldownDate = fixedDate(dayOffset: 1)
+        let snoozedUntil = fixedDate(dayOffset: 2)
+        try database.saveReminderCooldownStartedAt(cooldownDate)
+        try database.saveReminderSnoozedUntil(snoozedUntil)
+        XCTAssertEqual(try database.loadReminderCooldownStartedAt(), cooldownDate)
+        XCTAssertEqual(try database.loadReminderSnoozedUntil(), snoozedUntil)
+
+        try database.clearReminderSnoozedUntil()
+        XCTAssertNil(try database.loadReminderSnoozedUntil())
+
         try database.recordHookEvent(
             source: "debug",
             event: "prompt_submitted",

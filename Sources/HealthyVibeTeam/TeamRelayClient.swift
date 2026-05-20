@@ -7,7 +7,7 @@ public final class TeamRelayClient {
     private let decoder: JSONDecoder
 
     public init(
-        baseURL: URL = URL(string: "https://healthyvibe-relay.workers.dev")!,
+        baseURL: URL = URL(string: "https://healthyvibe.owlib.ai")!,
         session: URLSession = .shared
     ) {
         self.baseURL = baseURL

@@ -15,6 +15,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var notificationPermissionState: NotificationPermissionState = .unknown
     @Published private(set) var lastReminderMessage: String?
     @Published private(set) var agentConnectionStatuses: [AgentKind: AgentConnectionStatus] = [:]
+    @Published private(set) var agentStatusMessage: String?
     @Published private(set) var teamProfile: TeamProfile?
     @Published private(set) var teamRanking: TeamRanking?
     @Published private(set) var teamStatusMessage: String?
@@ -27,7 +28,8 @@ final class AppModel: ObservableObject {
     private var activeTimeTracker: ActiveTimeTracker?
     private var hookBridgeManager: HookBridgeManager?
     private var hookEventPollTimer: Timer?
-    private var lastReminderAt: Date?
+    private var cooldownStartedAt: Date?
+    private var reminderSnoozedUntil: Date?
     private let teamRelayClient = TeamRelayClient()
     private let reminderCooldown: TimeInterval = 30 * 60
 
@@ -62,7 +64,8 @@ final class AppModel: ObservableObject {
                     date: todayTaskState.dateKey
                 )
             }
-            lastReminderAt = try database.loadLastReminderDate()
+            cooldownStartedAt = try database.loadReminderCooldownStartedAt()
+            reminderSnoozedUntil = try database.loadReminderSnoozedUntil()
             selectedHistoryDateKey = todayTaskState.dateKey
             try reloadHistory()
             try processPendingHookEvents()
@@ -99,16 +102,50 @@ final class AppModel: ObservableObject {
 
     func completeCurrentTask() {
         do {
-            if let database {
-                _ = try database.completeCurrentTask(in: &todayTaskState)
-            } else {
-                _ = taskEngine.completeCurrentTask(in: &todayTaskState)
+            let completed = try completeCurrentTask(now: Date())
+            if completed {
+                syncTeamSnapshot()
             }
-
-            try reloadHistory()
-            syncTeamSnapshot()
         } catch {
             recordError("完成任务失败：\(error.localizedDescription)")
+        }
+    }
+
+    @discardableResult
+    private func completeCurrentTask(now: Date) throws -> Bool {
+        let summary: TaskCompletionSummary?
+        if let database {
+            summary = try database.completeCurrentTask(in: &todayTaskState, now: now)
+        } else {
+            summary = taskEngine.completeCurrentTask(in: &todayTaskState, now: now)
+        }
+
+        guard summary != nil else {
+            return false
+        }
+
+        try startReminderCooldown(now: now)
+        try clearReminderSnooze()
+        try reloadHistory()
+        return true
+    }
+
+    func handleTaskNotificationAction(_ action: TaskNotificationAction) {
+        do {
+            switch action {
+            case .completed:
+                let completed = try completeCurrentTask(now: Date())
+                lastReminderMessage = completed ? "已完成，30 分钟后再提醒。" : "当前没有待完成任务。"
+                if completed {
+                    syncTeamSnapshot()
+                }
+            case .remindIn30Minutes:
+                try snoozeReminder(duration: 30 * 60, label: "30 分钟后")
+            case .remindIn2Hours:
+                try snoozeReminder(duration: 2 * 60 * 60, label: "两小时后")
+            }
+        } catch {
+            recordError("处理通知操作失败：\(error.localizedDescription)")
         }
     }
 
@@ -147,10 +184,12 @@ final class AppModel: ObservableObject {
             if let database {
                 try database.clearAllData()
                 todayTaskState = try database.loadTodayState()
-                lastReminderAt = try database.loadLastReminderDate()
+                cooldownStartedAt = try database.loadReminderCooldownStartedAt()
+                reminderSnoozedUntil = try database.loadReminderSnoozedUntil()
             } else {
                 todayTaskState = taskEngine.makeInitialState()
-                lastReminderAt = nil
+                cooldownStartedAt = nil
+                reminderSnoozedUntil = nil
             }
 
             selectedHistoryDateKey = todayTaskState.dateKey
@@ -166,8 +205,24 @@ final class AppModel: ObservableObject {
     }
 
     func requestNotificationPermission() {
-        notificationService?.requestAuthorization { [weak self] state in
+        notificationService?.requestAuthorization { [weak self] state, error in
             self?.notificationPermissionState = state
+
+            if let error {
+                self?.lastReminderMessage = "通知授权失败：\(error.localizedDescription)"
+                return
+            }
+
+            switch state {
+            case .enabled:
+                self?.lastReminderMessage = "通知已开启，点模拟可以验证系统通知。"
+            case .denied:
+                self?.lastReminderMessage = "通知被系统关闭，请点系统打开 HealthyVibe 通知。"
+            case .notDetermined:
+                self?.lastReminderMessage = "系统没有弹出授权窗口，请点系统手动开启。"
+            case .unknown:
+                self?.lastReminderMessage = "通知状态未知，请点系统检查权限。"
+            }
         }
     }
 
@@ -182,13 +237,14 @@ final class AppModel: ObservableObject {
     }
 
     func simulatePromptSubmitted() {
-        handlePromptSubmitted(source: "debug", now: Date())
+        handlePromptSubmitted(source: "debug", now: Date(), bypassCooldown: true)
     }
 
     func connectAgent(_ agent: AgentKind) {
         do {
             try hookBridgeManager?.connect(agent)
             refreshAgentStatuses()
+            agentStatusMessage = connectionMessage(for: agent)
             lastErrorMessage = nil
         } catch {
             recordError("连接 \(agent.displayName) 失败：\(error.localizedDescription)")
@@ -199,6 +255,7 @@ final class AppModel: ObservableObject {
         do {
             try hookBridgeManager?.disconnect(agent)
             refreshAgentStatuses()
+            agentStatusMessage = "已断开 \(agent.displayName)。"
             lastErrorMessage = nil
         } catch {
             recordError("断开 \(agent.displayName) 失败：\(error.localizedDescription)")
@@ -210,6 +267,7 @@ final class AppModel: ObservableObject {
             try hookBridgeManager?.sendTestEvent(for: agent)
             try processPendingHookEvents()
             refreshAgentStatuses()
+            agentStatusMessage = "本地 hook 脚本可写入事件；Codex 真实触发仍需 /hooks 信任。"
             lastErrorMessage = nil
         } catch {
             recordError("测试 \(agent.displayName) hook 失败：\(error.localizedDescription)")
@@ -222,6 +280,18 @@ final class AppModel: ObservableObject {
 
     var hasConnectedAgent: Bool {
         AgentKind.allCases.contains { status(for: $0) == .connected }
+    }
+
+    var agentHintText: String? {
+        if status(for: .codex) == .connected {
+            return "Codex 已写入 hooks.json；重启 Codex 后输入 /hooks，信任 HealthyVibe。"
+        }
+
+        if status(for: .claude) == .connected {
+            return "Claude 已写入 settings.json；重启会话后生效。"
+        }
+
+        return nil
     }
 
     var teamRankText: String? {
@@ -388,7 +458,11 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func handlePromptSubmitted(source: String, now: Date) {
+    private func handlePromptSubmitted(
+        source: String,
+        now: Date,
+        bypassCooldown: Bool = false
+    ) {
         activeTimeTracker?.recordHookEvent()
 
         do {
@@ -398,7 +472,12 @@ final class AppModel: ObservableObject {
                 receivedAt: now,
                 processedAt: now
             )
-            try deliverReminder(source: source, reason: .promptSubmitted, now: now)
+            try deliverReminder(
+                source: source,
+                reason: .promptSubmitted,
+                now: now,
+                bypassCooldown: bypassCooldown
+            )
         } catch {
             recordError("处理 prompt 事件失败：\(error.localizedDescription)")
         }
@@ -415,12 +494,18 @@ final class AppModel: ObservableObject {
     private func deliverReminder(
         source: String,
         reason: ReminderReason,
-        now: Date
+        now: Date,
+        bypassCooldown: Bool = false
     ) throws {
         try refreshStateForReminder(now: now)
 
-        guard shouldDeliverReminder(now: now) else {
-            lastReminderMessage = "冷却中：30 分钟内不会重复下发任务。"
+        if !bypassCooldown, let snoozedMessage = try activeSnoozeMessage(now: now) {
+            lastReminderMessage = snoozedMessage
+            return
+        }
+
+        guard bypassCooldown || shouldDeliverReminder(now: now) else {
+            lastReminderMessage = cooldownMessage(now: now)
             return
         }
 
@@ -443,15 +528,30 @@ final class AppModel: ObservableObject {
             return
         }
 
-        try database?.saveLastReminderDate(now)
-        lastReminderAt = now
         try reloadHistory()
 
         let body = notificationBody(source: source, item: item, reason: reason)
         lastReminderMessage = body
 
         if notificationPermissionState == .enabled {
-            notificationService?.sendTaskNotification(title: "Vibe延寿指南", body: body)
+            notificationService?.sendTaskNotification(title: "Vibe延寿指南", body: body) { [weak self] error in
+                if let error {
+                    self?.lastReminderMessage = "\(body)｜通知发送失败：\(error.localizedDescription)"
+                } else {
+                    self?.lastReminderMessage = "\(body)｜系统通知已发送。"
+                }
+            }
+        } else {
+            lastReminderMessage = "通知未开启：\(body)"
+        }
+    }
+
+    private func connectionMessage(for agent: AgentKind) -> String {
+        switch agent {
+        case .claude:
+            "Claude 已写入 settings.json；重启会话后生效。"
+        case .codex:
+            "Codex 已写入 hooks.json；重启 Codex 后输入 /hooks，信任 HealthyVibe。"
         }
     }
 
@@ -464,11 +564,78 @@ final class AppModel: ObservableObject {
     }
 
     private func shouldDeliverReminder(now: Date) -> Bool {
-        guard let lastReminderAt else {
+        guard let cooldownStartedAt else {
             return true
         }
 
-        return now.timeIntervalSince(lastReminderAt) >= reminderCooldown
+        return now.timeIntervalSince(cooldownStartedAt) >= reminderCooldown
+    }
+
+    private func cooldownMessage(now: Date) -> String {
+        guard let cooldownStartedAt else {
+            return "hook 已收到，暂不下发新任务。"
+        }
+
+        let remainingSeconds = max(0, reminderCooldown - now.timeIntervalSince(cooldownStartedAt))
+        let remainingMinutes = max(1, Int(ceil(remainingSeconds / 60)))
+        return "hook 已收到，完成冷却剩余约 \(remainingMinutes) 分钟。"
+    }
+
+    private func activeSnoozeMessage(now: Date) throws -> String? {
+        guard let snoozedUntil = reminderSnoozedUntil else {
+            return nil
+        }
+
+        if now >= snoozedUntil {
+            try clearReminderSnooze()
+            return nil
+        }
+
+        let remainingSeconds = max(0, snoozedUntil.timeIntervalSince(now))
+        let remainingMinutes = max(1, Int(ceil(remainingSeconds / 60)))
+        return "hook 已收到，稍后提醒剩余约 \(remainingMinutes) 分钟。"
+    }
+
+    private func startReminderCooldown(now: Date) throws {
+        cooldownStartedAt = now
+        try database?.saveReminderCooldownStartedAt(now)
+    }
+
+    private func clearReminderSnooze() throws {
+        reminderSnoozedUntil = nil
+        try database?.clearReminderSnoozedUntil()
+        notificationService?.cancelSnoozedTaskNotification()
+    }
+
+    private func snoozeReminder(duration: TimeInterval, label: String) throws {
+        let now = Date()
+        try refreshStateForReminder(now: now)
+
+        guard let item = todayTaskState.currentTask else {
+            lastReminderMessage = "当前没有待稍后提醒的任务。"
+            return
+        }
+
+        let snoozedUntil = now.addingTimeInterval(duration)
+        reminderSnoozedUntil = snoozedUntil
+        try database?.saveReminderSnoozedUntil(snoozedUntil)
+
+        let body = notificationBody(source: "snooze", item: item, reason: .snoozed)
+        lastReminderMessage = "已改到\(label)提醒。"
+
+        if notificationPermissionState == .enabled {
+            notificationService?.sendTaskNotification(
+                title: "Vibe延寿指南",
+                body: body,
+                delay: duration
+            ) { [weak self] error in
+                if let error {
+                    self?.lastReminderMessage = "稍后提醒设置失败：\(error.localizedDescription)"
+                } else {
+                    self?.lastReminderMessage = "已改到\(label)提醒。"
+                }
+            }
+        }
     }
 
     private func notificationBody(
@@ -482,6 +649,8 @@ final class AppModel: ObservableObject {
             return "\(agentName) 开始干活了。你先\(item.template.title)，别盯着进度条等。"
         case .activeFallback:
             return "这一小时没等到新的 agent，也该给身体发个 keepalive 了。先\(item.template.title)。"
+        case .snoozed:
+            return "稍后提醒到了。先\(item.template.title)，给身体一点缓存时间。"
         }
     }
 }
@@ -495,4 +664,5 @@ enum SetupStatus {
 private enum ReminderReason {
     case promptSubmitted
     case activeFallback
+    case snoozed
 }

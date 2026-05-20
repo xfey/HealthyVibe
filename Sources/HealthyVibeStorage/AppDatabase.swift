@@ -177,6 +177,26 @@ public final class AppDatabase {
         }
     }
 
+    public func loadReminderCooldownStartedAt() throws -> Date? {
+        try loadDateSetting(key: "reminderCooldownStartedAt")
+    }
+
+    public func saveReminderCooldownStartedAt(_ date: Date) throws {
+        try saveDateSetting(key: "reminderCooldownStartedAt", date: date)
+    }
+
+    public func loadReminderSnoozedUntil() throws -> Date? {
+        try loadDateSetting(key: "reminderSnoozedUntil")
+    }
+
+    public func saveReminderSnoozedUntil(_ date: Date) throws {
+        try saveDateSetting(key: "reminderSnoozedUntil", date: date)
+    }
+
+    public func clearReminderSnoozedUntil() throws {
+        try deleteSetting(key: "reminderSnoozedUntil")
+    }
+
     public func recordHookEvent(
         source: String,
         event: String,
@@ -542,6 +562,44 @@ private extension AppDatabase {
             arguments: [isoString(now)]
         )
         return 30
+    }
+
+    func loadDateSetting(key: String) throws -> Date? {
+        try dbQueue.read { db in
+            guard let value = try String.fetchOne(
+                db,
+                sql: "SELECT value FROM app_settings WHERE key = ?",
+                arguments: [key]
+            ) else {
+                return nil
+            }
+
+            return date(from: value)
+        }
+    }
+
+    func saveDateSetting(key: String, date: Date) throws {
+        try dbQueue.write { db in
+            try db.execute(
+                sql: """
+                INSERT INTO app_settings (key, value, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = excluded.updated_at
+                """,
+                arguments: [key, isoString(date), isoString(Date())]
+            )
+        }
+    }
+
+    func deleteSetting(key: String) throws {
+        try dbQueue.write { db in
+            try db.execute(
+                sql: "DELETE FROM app_settings WHERE key = ?",
+                arguments: [key]
+            )
+        }
     }
 
     func ensureDailyPlan(

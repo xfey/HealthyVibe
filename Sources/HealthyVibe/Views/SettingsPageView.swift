@@ -15,44 +15,11 @@ struct SettingsPageView: View {
                 agentButton(.codex)
             }
 
-            Divider()
-                .overlay(HVColor.border)
-
-            Text("通知调试")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(HVColor.primaryText)
-
-            Text(appModel.notificationPermissionState.displayText)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(HVColor.secondaryText)
-                .lineLimit(1)
-
-            HStack(spacing: 6) {
-                if appModel.notificationPermissionState == .notDetermined {
-                    Button("开启") {
-                        appModel.requestNotificationPermission()
-                    }
-                    .buttonStyle(HVCompactButtonStyle())
-                }
-
-                if appModel.notificationPermissionState == .denied {
-                    Button("系统") {
-                        appModel.openNotificationSettings()
-                    }
-                    .buttonStyle(HVCompactButtonStyle())
-                }
-
-                Button("模拟") {
-                    appModel.simulatePromptSubmitted()
-                }
-                .buttonStyle(HVCompactButtonStyle())
-            }
-
-            if let message = appModel.lastReminderMessage {
+            if let message = appModel.agentStatusMessage ?? appModel.agentHintText {
                 Text(message)
                     .font(.system(size: 10))
                     .foregroundStyle(HVColor.mutedText)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 0)
